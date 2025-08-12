@@ -35,9 +35,14 @@ class Player : public Object
 {
 public:
     explicit Player(b2WorldId WID);
+    const float PLAYER_SPEED = 10.0f;
 
     void Update() override;
     void Render(SDL_Renderer* renderer) override;
+
+    void Jump();
+    void Move_Right();
+    void Move_Left();
 };
 
 class Scenery : public Object

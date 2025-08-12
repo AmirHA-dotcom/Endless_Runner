@@ -25,9 +25,42 @@ Player::Player(b2WorldId worldId)
     b2Shape_SetRestitution(box_shape_ID, 0.5f);
 }
 
+void Player::Jump()
+{
+    b2Vec2 impulse = { 0.0f, -40.0f };
+    b2Body_ApplyLinearImpulseToCenter(Body_Id, impulse, true);
+}
+
+void Player::Move_Right()
+{
+    b2Vec2 current_velocity = b2Body_GetLinearVelocity(Body_Id);
+
+    current_velocity.x = PLAYER_SPEED;
+
+    b2Body_SetLinearVelocity(Body_Id, current_velocity);
+}
+
+void Player::Move_Left()
+{
+    b2Vec2 current_velocity = b2Body_GetLinearVelocity(Body_Id);
+
+    current_velocity.x = -PLAYER_SPEED;
+
+    b2Body_SetLinearVelocity(Body_Id, current_velocity);
+}
+
 void Player::Update()
 {
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
 
+    if (keyboardState[SDL_SCANCODE_D])
+    {
+        Move_Right();
+    }
+    else if (keyboardState[SDL_SCANCODE_A])
+    {
+        Move_Left();
+    }
 }
 
 void Player::Render(SDL_Renderer* renderer)

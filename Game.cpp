@@ -82,10 +82,29 @@ void Game::Run()
             {
                 Running = false;
             }
+
+            if (event.type == SDL_KEYDOWN)
+            {
+                switch (event.key.keysym.sym)
+                {
+                    case SDLK_ESCAPE:
+                    {
+                        Running = false;
+                    }
+                    case SDLK_SPACE:
+                    {
+                        m_Player->Jump();
+                    }
+                }
+            }
         }
         // FPS
         float timeStep = 1.0f / 60.0f;
         b2World_Step(World_Id, timeStep, 3);
+
+        // Updating
+        m_Player->Update();
+        m_Ground->Update();
 
         // Rendering
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
