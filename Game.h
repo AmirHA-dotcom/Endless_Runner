@@ -8,8 +8,6 @@
 
 #include "Object.h"
 
-using namespace std;
-
 class Game
 {
 private:
@@ -17,11 +15,11 @@ private:
     SDL_Renderer* renderer;
     b2WorldId World_Id;
     const char* FONT = "D:/Fonts/Roboto/static/Roboto-Regular.ttf";
-    const float M2P = 50.0f;
-    const float P2M = 1.0f / M2P;
+    const float PIXELS_PER_METER = 30.0f;
 
-    unique_ptr<Player> Player;
-    unique_ptr<Scenery> Ground;
+
+    unique_ptr<Player> m_Player;
+    unique_ptr<Scenery> m_Ground;
 public:
     Game();
     void Run();

@@ -13,10 +13,17 @@
 #include <vector>
 #include <memory>
 
+using namespace std;
+
+// Global Variables
+inline int SCREEN_WIDTH, SCREEN_HEIGHT;
+
+
 class Object
 {
 protected:
     b2BodyId Body_Id;
+    const float PIXELS_PER_METER = 30.0f;
 
 public:
     virtual ~Object() = default;

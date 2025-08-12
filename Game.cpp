@@ -53,9 +53,12 @@ Game::Game()
     worldDef.gravity = {0.0f, 20.0f};
     World_Id = b2CreateWorld(&worldDef);
 
+    // Window size
+    SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+
     // Objects
-//    Player = make_unique<Player>(World_Id);
-//    Ground = make_unique<Scenery>(World_Id);
+    m_Player = make_unique<Player>(World_Id);
+    m_Ground = make_unique<Scenery>(World_Id);
 
 }
 
@@ -72,6 +75,7 @@ void Game::Run()
     // game loop
     while (Running)
     {
+        frameStart = SDL_GetTicks();
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
@@ -86,6 +90,9 @@ void Game::Run()
         // Rendering
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
+
+        m_Ground->Render(renderer);
+        m_Player->Render(renderer);
 
         SDL_RenderPresent(renderer);
 
