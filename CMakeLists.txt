@@ -9,7 +9,9 @@ add_subdirectory(box2d-main)
 
 add_executable(Endless_Runner main.cpp
         Game.cpp
-        Game.h)
+        Game.h
+        Object.cpp
+        Object.h)
 
 target_include_directories(Endless_Runner PRIVATE "${SDL2_DEV_DIR}/include")
 

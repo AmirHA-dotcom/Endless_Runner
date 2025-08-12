@@ -24,7 +24,7 @@ Game::Game()
         cerr << "Failed to load font: " << TTF_GetError() << endl;
     }
 
-    SDL_Window* window = SDL_CreateWindow(
+    window = SDL_CreateWindow(
             "Endless Runner",
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
@@ -41,7 +41,7 @@ Game::Game()
     }
 
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -51,7 +51,11 @@ Game::Game()
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = {0.0f, 20.0f};
-    b2WorldId worldId = b2CreateWorld(&worldDef);
+    World_Id = b2CreateWorld(&worldDef);
+
+    // Objects
+//    Player = make_unique<Player>(World_Id);
+//    Ground = make_unique<Scenery>(World_Id);
 
 }
 
@@ -60,6 +64,10 @@ void Game::Run()
     // variables
     bool Running = true;
     SDL_Event event;
+    const int TARGET_FPS = 60;
+    const int FRAME_DELAY = 1000 / TARGET_FPS;
+    Uint32 frameStart;
+    int frameTime;
 
     // game loop
     while (Running)
@@ -70,6 +78,22 @@ void Game::Run()
             {
                 Running = false;
             }
+        }
+        // FPS
+        float timeStep = 1.0f / 60.0f;
+        b2World_Step(World_Id, timeStep, 3);
+
+        // Rendering
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+
+        SDL_RenderPresent(renderer);
+
+        // FPS
+        frameTime = SDL_GetTicks() - frameStart;
+        if (FRAME_DELAY > frameTime)
+        {
+            SDL_Delay(FRAME_DELAY - frameTime);
         }
     }
 
