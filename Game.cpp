@@ -58,7 +58,8 @@ Game::Game()
 
     // Objects
     m_Player = make_unique<Player>(World_Id);
-    m_Ground = make_unique<Scenery>(World_Id);
+    //m_Ground = make_unique<Scenery>(World_Id);
+    Generate_Initial_Ground();
 
 }
 
@@ -104,7 +105,7 @@ void Game::Run()
 
         // Updating
         m_Player->Update();
-        m_Ground->Update();
+        //m_Ground->Update();
 
         // Camara
         b2Vec2 playerPosMeters = m_Player->get_position();
@@ -117,7 +118,7 @@ void Game::Run()
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        m_Ground->Render(renderer, cameraX);
+        //m_Ground->Render(renderer, cameraX);
         m_Player->Render(renderer, cameraX);
 
         SDL_RenderPresent(renderer);
@@ -130,4 +131,16 @@ void Game::Run()
         }
     }
 
+}
+
+void Game::Generate_Initial_Ground()
+{
+    float currentX = 0.0f;
+    // Create enough segments to fill about two screens worth of ground
+    for (int i = 0; i < 3; ++i)
+    {
+        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, currentX));
+        // The next segment will start at the right edge of this one
+        currentX = m_Ground_Segments.back()->Get_Right_EdgeX();
+    }
 }

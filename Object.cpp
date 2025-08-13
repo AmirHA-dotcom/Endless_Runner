@@ -82,16 +82,25 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
 
 // Scenery
 
-Scenery::Scenery(b2WorldId worldId)
+Scenery::Scenery(b2WorldId worldId, float startX)
 {
-    b2BodyDef ground_body_def = b2DefaultBodyDef();
-    ground_body_def.position = { (SCREEN_WIDTH / 2.0f) / PIXELS_PER_METER, (SCREEN_HEIGHT - 10.0f) / PIXELS_PER_METER };
-    Body_Id = b2CreateBody(worldId, &ground_body_def);
-    b2Polygon ground_box = b2MakeBox((SCREEN_WIDTH / 2.0f) / PIXELS_PER_METER, 10.0f / PIXELS_PER_METER);
-    b2ShapeDef ground_shape_def = b2DefaultShapeDef();
-    b2CreatePolygonShape(Body_Id, &ground_shape_def, &ground_box);
-}
+    const float Ground_Height_Px = 40.0f;
+    m_Width_Meters = SCREEN_WIDTH / PIXELS_PER_METER;
 
+    b2BodyDef groundBodyDef = b2DefaultBodyDef();
+    groundBodyDef.type = b2_staticBody;
+
+    groundBodyDef.position = {
+            startX / PIXELS_PER_METER + m_Width_Meters / 2.0f,
+            (SCREEN_HEIGHT - (Ground_Height_Px / 2.0f)) / PIXELS_PER_METER
+    };
+
+    Body_Id = b2CreateBody(worldId, &groundBodyDef);
+
+    b2Polygon groundBox = b2MakeBox(m_Width_Meters / 2.0f, (Ground_Height_Px / 2.0f) / PIXELS_PER_METER);
+    b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+    b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
+}
 void Scenery::Update()
 {
 
@@ -112,4 +121,18 @@ void Scenery::Render(SDL_Renderer* renderer, float cameraX)
 
     SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
     SDL_RenderFillRect(renderer, &scenery_rect);
+}
+
+Scenery::~Scenery()
+{
+    if (b2Body_IsValid(Body_Id))
+    {
+        b2DestroyBody(Body_Id);
+    }
+}
+
+float Scenery::Get_Right_EdgeX() const
+{
+    b2Vec2 pos = b2Body_GetPosition(Body_Id);
+    return (pos.x + m_Width_Meters / 2.0f) * PIXELS_PER_METER;
 }

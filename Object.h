@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <deque>
 
 using namespace std;
 
@@ -49,11 +50,15 @@ public:
 
 class Scenery : public Object
 {
+private:
+    float m_Width_Meters;
 public:
-    explicit Scenery(b2WorldId WID);
+    explicit Scenery(b2WorldId WID, float startX);
+    ~Scenery();
 
     void Update() override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
+    float Get_Right_EdgeX() const;
 };
 
 #endif //ENDLESS_RUNNER_OBJECT_H

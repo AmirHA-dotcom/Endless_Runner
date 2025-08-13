@@ -20,10 +20,14 @@ private:
     float cameraX = 0.0f;
 
     unique_ptr<Player> m_Player;
-    unique_ptr<Scenery> m_Ground;
+    //unique_ptr<Scenery> m_Ground;
+    deque<unique_ptr<Scenery>> m_Ground_Segments;
 public:
     Game();
     void Run();
+
+    void Generate_Initial_Ground();
+    void Update_Ground();
 };
 
 
