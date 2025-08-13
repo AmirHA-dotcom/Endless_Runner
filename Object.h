@@ -28,7 +28,7 @@ protected:
 public:
     virtual ~Object() = default;
     virtual void Update() = 0;
-    virtual void Render(SDL_Renderer* renderer) = 0;
+    virtual void Render(SDL_Renderer* renderer, float cameraX) = 0;
 };
 
 class Player : public Object
@@ -38,11 +38,13 @@ public:
     const float PLAYER_SPEED = 10.0f;
 
     void Update() override;
-    void Render(SDL_Renderer* renderer) override;
+    void Render(SDL_Renderer* renderer, float cameraX) override;
 
     void Jump();
     void Move_Right();
     void Move_Left();
+
+    b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
 };
 
 class Scenery : public Object
@@ -51,7 +53,7 @@ public:
     explicit Scenery(b2WorldId WID);
 
     void Update() override;
-    void Render(SDL_Renderer* renderer) override;
+    void Render(SDL_Renderer* renderer, float cameraX) override;
 };
 
 #endif //ENDLESS_RUNNER_OBJECT_H

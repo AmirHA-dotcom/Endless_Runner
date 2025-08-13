@@ -106,12 +106,19 @@ void Game::Run()
         m_Player->Update();
         m_Ground->Update();
 
+        // Camara
+        b2Vec2 playerPosMeters = m_Player->get_position();
+        float playerPosPixelsX = playerPosMeters.x * PIXELS_PER_METER;
+
+        // The camera's position is its top-left corner
+        cameraX = playerPosPixelsX - (SCREEN_WIDTH / 2.0f);
+
         // Rendering
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        m_Ground->Render(renderer);
-        m_Player->Render(renderer);
+        m_Ground->Render(renderer, cameraX);
+        m_Player->Render(renderer, cameraX);
 
         SDL_RenderPresent(renderer);
 

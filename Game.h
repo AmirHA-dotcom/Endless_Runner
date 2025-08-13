@@ -17,6 +17,7 @@ private:
     const char* FONT = "D:/Fonts/Roboto/static/Roboto-Regular.ttf";
     const float PIXELS_PER_METER = 30.0f;
 
+    float cameraX = 0.0f;
 
     unique_ptr<Player> m_Player;
     unique_ptr<Scenery> m_Ground;
