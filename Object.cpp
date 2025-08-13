@@ -84,7 +84,7 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
 
 Scenery::Scenery(b2WorldId worldId, float startX)
 {
-    const float Ground_Height_Px = 40.0f;
+    const float Ground_Height_Px = 20.0f;
     m_Width_Meters = SCREEN_WIDTH / PIXELS_PER_METER;
 
     b2BodyDef groundBodyDef = b2DefaultBodyDef();
@@ -101,6 +101,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
     b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
 }
+
 void Scenery::Update()
 {
 

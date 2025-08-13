@@ -121,6 +121,11 @@ void Game::Run()
         //m_Ground->Render(renderer, cameraX);
         m_Player->Render(renderer, cameraX);
 
+        for (const auto& segment : m_Ground_Segments)
+        {
+            segment->Render(renderer, cameraX);
+        }
+
         SDL_RenderPresent(renderer);
 
         // FPS
@@ -142,5 +147,23 @@ void Game::Generate_Initial_Ground()
         m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, currentX));
         // The next segment will start at the right edge of this one
         currentX = m_Ground_Segments.back()->Get_Right_EdgeX();
+    }
+}
+
+void Game::Update_Ground()
+{
+    // If the right edge of the last ground segment is on screen, add a new one.
+    Scenery* lastSegment = m_Ground_Segments.back().get();
+    if (lastSegment->Get_Right_EdgeX() < cameraX + SCREEN_WIDTH + 200) // +200 for a buffer
+    {
+        float nextX = lastSegment->Get_Right_EdgeX();
+        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX));
+    }
+
+    // If the right edge of the first ground segment is off the left side of the screen, remove it.
+    Scenery* firstSegment = m_Ground_Segments.front().get();
+    if (firstSegment->Get_Right_EdgeX() < cameraX)
+    {
+        m_Ground_Segments.pop_front();
     }
 }
