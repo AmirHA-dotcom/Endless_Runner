@@ -94,6 +94,11 @@ Game::Game()
     m_Player = make_unique<Player>(World_Id);
     Generate_Initial_Ground();
 
+    // Sounds
+    Audio_Manager::GetInstance().Init();
+    Audio_Manager::GetInstance().LoadSound("jump", "D://SOUND_EFFECTS//qubodup-cfork-ccby3-jump.ogg");
+    Audio_Manager::GetInstance().LoadSound("crash", "D://SOUND_EFFECTS//zoom3.wav");
+    Audio_Manager::GetInstance().LoadSound("UI_click", "D://SOUND_EFFECTS//UI//switch9.ogg");
 }
 
 void Game::Run()
@@ -350,6 +355,7 @@ void Game::Update_Playing(float timeStep)
     // --- 4. Check for State Change ---
     if (m_Player->IsDead())
     {
+        Audio_Manager::GetInstance().PlaySound("crash");
         Update_High_Scores();
         m_current_State = STATE::GAME_OVER;
     }
@@ -438,12 +444,15 @@ void Game::HandleEvents_MainMenu(const SDL_Event& event)
 
         if (SDL_PointInRect(&mousePoint, &startButtonRect))
         {
+            Audio_Manager::GetInstance().PlaySound("UI_click");
             Reset_Game();
             m_current_State = STATE::PLAYING;
         }
         else if (SDL_PointInRect(&mousePoint, &quitButtonRect))
         {
+            Audio_Manager::GetInstance().PlaySound("UI_click");
             running = false;
+            Audio_Manager::GetInstance().CleanUp();
         }
     }
 }
@@ -476,11 +485,13 @@ void Game::HandleEvents_GameOver(const SDL_Event& event)
 
         if (SDL_PointInRect(&mousePoint, &restartButtonRect))
         {
+            Audio_Manager::GetInstance().PlaySound("UI_click");
             Reset_Game();
             m_current_State = STATE::PLAYING;
         }
         else if (SDL_PointInRect(&mousePoint, &menuButtonRect))
         {
+            Audio_Manager::GetInstance().PlaySound("UI_click");
             m_current_State = STATE::MAIN_MENU;
         }
     }

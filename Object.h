@@ -5,22 +5,7 @@
 #ifndef ENDLESS_RUNNER_OBJECT_H
 #define ENDLESS_RUNNER_OBJECT_H
 
-#include <box2d/box2d.h>
-#include "box2d/collision.h"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <memory>
-#include <deque>
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
-#include <fstream>
-#include <algorithm>
-
-using namespace std;
+#include "Audio_Manager.h"
 
 // Global Variables
 inline int SCREEN_WIDTH, SCREEN_HEIGHT;

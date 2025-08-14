@@ -66,7 +66,7 @@ void Player::Jump()
     velocity.y = -20.0f;
     b2Body_SetLinearVelocity(Body_Id, velocity);
 
-    // Use one jump
+    Audio_Manager::GetInstance().PlaySound("jump");
     m_jumps_Left--;
 }
 

@@ -12,7 +12,9 @@ add_executable(Endless_Runner main.cpp
         Game.h
         Object.cpp
         Object.h
-        )
+        Audio_Manager.cpp
+        Audio_Manager.h
+)
 
 target_include_directories(Endless_Runner PRIVATE "${SDL2_DEV_DIR}/include")
 
@@ -23,6 +25,7 @@ target_link_libraries(Endless_Runner PRIVATE
         "${SDL2_DEV_DIR}/lib/libSDL2.a"
         "${SDL2_DEV_DIR}/lib/libSDL2_image.a"
         "${SDL2_DEV_DIR}/lib/libSDL2_ttf.a"
+        "${SDL2_DEV_DIR}/lib/libSDL2_mixer.a"
         mingw32
         winmm
         setupapi
