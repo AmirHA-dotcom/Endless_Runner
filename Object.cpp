@@ -27,7 +27,7 @@ Player::Player(b2WorldId worldId)
 
     b2BodyDef body_def = b2DefaultBodyDef();
     body_def.type = b2_dynamicBody;
-    body_def.position = { 400.0f / PIXELS_PER_METER, 400.0f / PIXELS_PER_METER };
+    body_def.position = { 300.0f / PIXELS_PER_METER, 700.0f / PIXELS_PER_METER };
     body_def.userData = this;
 
     Body_Id = b2CreateBody(worldId, &body_def);
