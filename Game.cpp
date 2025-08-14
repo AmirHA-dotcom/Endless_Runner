@@ -452,8 +452,10 @@ void Game::Update_Playing(float timeStep)
             float deltaY = playerCenter.y - closestY;
             float distanceSq = (deltaX * deltaX) + (deltaY * deltaY);
 
+            const float collisionBuffer = 0.1f; // A small buffer in meters
+            float effectiveRadius = playerRadius + collisionBuffer;
             // Compare that distance to the player's radius squared
-            if (distanceSq < (playerRadius * playerRadius))
+            if (distanceSq < (effectiveRadius * effectiveRadius))
             {
                 Audio_Manager::GetInstance().PlaySound("crash");
                 m_Player->SetIsDead(true);
@@ -462,7 +464,7 @@ void Game::Update_Playing(float timeStep)
         }
     }
 
-    // --- NEW: Player vs Power-up Collision Check ---
+    // --- Player vs Power-up Collision Check ---
     if (!m_Player->IsDead())
     {
         b2Vec2 playerCenter = m_Player->get_position();

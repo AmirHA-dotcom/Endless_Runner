@@ -357,5 +357,21 @@ void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
         case PowerUpType::DOUBLE_SCORE: color = {0, 255, 0, 255};   break;
     }
 
-    // ... (logic to get position and draw a circle of the chosen color) ...
+    b2Vec2 position = b2Body_GetPosition(Body_Id);
+    int centerX = static_cast<int>((position.x * PIXELS_PER_METER) - cameraX);
+    int centerY = static_cast<int>(position.y * PIXELS_PER_METER);
+    int radius = 20;
+
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+
+    for (int y = -radius; y <= radius; y++)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            if (x * x + y * y <= radius * radius)
+            {
+                SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
+            }
+        }
+    }
 }
