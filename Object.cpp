@@ -107,8 +107,16 @@ bool Player::Is_On_Ground(b2WorldId worldId)
     return hit;
 }
 
-void Player::Update(b2WorldId worldId, float deltaTime)
+void Player::Update(b2WorldId worldId, float deltaTime, int score)
 {
+    PLAYER_SPEED = BASE_SPEED + (score / 5) * 2;
+
+    // Clamp the speed to the maximum value
+    if (PLAYER_SPEED > MAX_SPEED)
+    {
+        PLAYER_SPEED = MAX_SPEED;
+    }
+
     b2Body_SetAngularVelocity(Body_Id, 0.0f);
     Move_Right();
 
@@ -134,6 +142,7 @@ void Player::Update(b2WorldId worldId, float deltaTime)
     {
         m_extraJumpTimer -= deltaTime;
     }
+
     if (m_doubleScoreTimer > 0)
     {
         m_doubleScoreTimer -= deltaTime;
@@ -220,7 +229,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     b2Shape_SetFriction(ground_shape_ID, 0.7f);
 }
 
-void Scenery::Update(b2WorldId worldId, float deltaTime)
+void Scenery::Update(b2WorldId worldId, float deltaTime, int score)
 {
 
 }
@@ -306,9 +315,9 @@ void Obstacle::Render(SDL_Renderer* renderer, float cameraX)
     b2Vec2 position = b2Body_GetPosition(Body_Id);
     SDL_Rect rect = {
             (int)((position.x * PIXELS_PER_METER) - (m_Width_Px / 2.0f) - cameraX),
-            (int)((position.y * PIXELS_PER_METER) - (m_Height_Px / 2.0f) + visual_Y_Offset),
+            (int)((position.y * PIXELS_PER_METER) - (m_Height_Px / 2.0f)),
             (int)m_Width_Px,
-            (int)m_Height_Px
+            (int)(m_Height_Px + visual_Y_Offset)
     };
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -320,7 +329,7 @@ Obstacle::~Obstacle() noexcept
 
 }
 
-void Obstacle::Update(b2WorldId worldId, float deltaTime)
+void Obstacle::Update(b2WorldId worldId, float deltaTime, int score)
 {
 
 }

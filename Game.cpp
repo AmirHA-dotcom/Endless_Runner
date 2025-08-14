@@ -266,7 +266,30 @@ void Game::Update_Spawning(float deltaTime)
 
         // --- 3. Reset the Timer ---
         // Set the timer for the *next* obstacle to a new random duration.
-        float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
+        float baseMinDelay = 1.5f;
+        float baseMaxDelay = 3.0f;
+
+        // Calculate a difficulty reduction based on the score.
+        // For every 10 points, we'll reduce the delay by 0.05 seconds.
+        float difficultyReduction = (m_score / 10) * 0.1f;
+
+        // Calculate the new, shorter delays
+        float currentMinDelay = baseMinDelay - difficultyReduction;
+        float currentMaxDelay = baseMaxDelay - difficultyReduction;
+
+        // Clamp the values to a maximum difficulty to keep the game playable
+        const float absoluteMinDelay = 0.8f;
+        const float absoluteMaxDelay = 1.5f;
+
+        if (currentMinDelay < absoluteMinDelay) currentMinDelay = absoluteMinDelay;
+        if (currentMaxDelay < absoluteMaxDelay) currentMaxDelay = absoluteMaxDelay;
+
+        // Ensure max is always greater than or equal to min
+        if (currentMaxDelay < currentMinDelay) currentMaxDelay = currentMinDelay;
+
+        // Set the timer to a new random duration within the new, harder range
+        float delayRange = currentMaxDelay - currentMinDelay;
+        float randomTime = currentMinDelay + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / delayRange));
         m_Obstacle_Spawn_Timer = randomTime;
     }
 }
@@ -353,7 +376,7 @@ void Game::Render_Playing()
 void Game::Update_Playing(float timeStep)
 {
     // --- 1. Update Game Objects ---
-    m_Player->Update(World_Id, timeStep);
+    m_Player->Update(World_Id, timeStep, m_score);
 
     Update_Ground();
     Update_Spawning(timeStep);

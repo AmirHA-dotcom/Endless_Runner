@@ -29,7 +29,7 @@ protected:
 
 public:
     virtual ~Object() = default;
-    virtual void Update(b2WorldId worldId, float deltaTime) = 0;
+    virtual void Update(b2WorldId worldId, float deltaTime, int score) = 0;
     virtual void Render(SDL_Renderer* renderer, float cameraX) = 0;
 };
 
@@ -42,11 +42,13 @@ private:
     float m_doubleScoreTimer = 0.0f;
     float m_extraJumpTimer = 0.0f;
 
+    float PLAYER_SPEED = 20.0f;
+    const float BASE_SPEED = 20.0f;
+    const float MAX_SPEED = 100.0f;
 public:
     explicit Player(b2WorldId WID);
-    const float PLAYER_SPEED = 40.0f;
 
-    void Update(b2WorldId worldId, float deltaTime) override;
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
 
     void Jump();
@@ -81,7 +83,7 @@ public:
     explicit Scenery(b2WorldId WID, float startX);
     ~Scenery();
 
-    void Update(b2WorldId worldId, float deltaTime) override;
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
 };
@@ -98,7 +100,7 @@ public:
 
     ~Obstacle();
 
-    void Update(b2WorldId worldId, float deltaTime) override;
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
@@ -119,7 +121,7 @@ private:
 public:
     explicit PowerUp(b2WorldId worldId, PowerUpType type, float x, float y);
     void Render(SDL_Renderer* renderer, float cameraX) override;
-    void Update(b2WorldId worldId, float deltaTime) override {}
+    void Update(b2WorldId worldId, float deltaTime, int score) override {}
 
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
 
