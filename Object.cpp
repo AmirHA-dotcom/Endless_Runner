@@ -62,7 +62,7 @@ void Player::Jump()
     }
 
     b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
-    velocity.y = -15.0f;
+    velocity.y = -20 .0f;
     b2Body_SetLinearVelocity(Body_Id, velocity);
 
     // Use one jump
