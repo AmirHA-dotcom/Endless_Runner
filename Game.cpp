@@ -6,6 +6,8 @@
 
 Game::Game()
 {
+    srand(time(0));
+
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -58,7 +60,6 @@ Game::Game()
 
     // Objects
     m_Player = make_unique<Player>(World_Id);
-    //m_Ground = make_unique<Scenery>(World_Id);
     Generate_Initial_Ground();
 
 }
@@ -105,7 +106,7 @@ void Game::Run()
 
         // Updating
         m_Player->Update();
-        //m_Ground->Update();
+        Update_Ground();
 
         // Camara
         b2Vec2 playerPosMeters = m_Player->get_position();
@@ -118,12 +119,15 @@ void Game::Run()
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        //m_Ground->Render(renderer, cameraX);
         m_Player->Render(renderer, cameraX);
 
         for (const auto& segment : m_Ground_Segments)
         {
             segment->Render(renderer, cameraX);
+        }
+        for (const auto& obstacle : m_Obstacles)
+        {
+            obstacle->Render(renderer, cameraX);
         }
 
         SDL_RenderPresent(renderer);
@@ -158,6 +162,19 @@ void Game::Update_Ground()
     {
         float nextX = lastSegment->Get_Right_EdgeX();
         m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX));
+
+        // Give a 1 in 4 (25%) chance to spawn an obstacle on a new segment
+        if (rand() % 4 == 0)
+        {
+            // Calculate spawn position on top of the new ground segment
+            float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40 is the ground height
+            float obstacleHeight = 50.0f; // As defined in your Obstacle constructor
+
+            float spawnX = nextX + SCREEN_WIDTH / 2.0f; // Center of the new segment
+            float spawnY = groundSurfaceY - (obstacleHeight / 2.0f);
+
+            m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY));
+        }
     }
 
     // If the right edge of the first ground segment is off the left side of the screen, remove it.
@@ -165,5 +182,9 @@ void Game::Update_Ground()
     if (firstSegment->Get_Right_EdgeX() < cameraX)
     {
         m_Ground_Segments.pop_front();
+    }
+    if (!m_Obstacles.empty() && m_Obstacles.front()->Get_Right_EdgeX() < cameraX)
+    {
+        m_Obstacles.pop_front();
     }
 }

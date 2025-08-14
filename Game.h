@@ -5,8 +5,7 @@
 #ifndef ENDLESS_RUNNER_GAME_H
 #define ENDLESS_RUNNER_GAME_H
 
-
-#include "Object.h"
+#include "Obstacle.h"
 
 class Game
 {
@@ -20,8 +19,9 @@ private:
     float cameraX = 0.0f;
 
     unique_ptr<Player> m_Player;
-    //unique_ptr<Scenery> m_Ground;
     deque<unique_ptr<Scenery>> m_Ground_Segments;
+    deque<unique_ptr<Obstacle>> m_Obstacles;
+
 public:
     Game();
     void Run();

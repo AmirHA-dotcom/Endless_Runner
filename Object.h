@@ -13,6 +13,9 @@
 #include <vector>
 #include <memory>
 #include <deque>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
@@ -36,7 +39,7 @@ class Player : public Object
 {
 public:
     explicit Player(b2WorldId WID);
-    const float PLAYER_SPEED = 10.0f;
+    const float PLAYER_SPEED = 40.0f;
 
     void Update() override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
@@ -60,5 +63,6 @@ public:
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
 };
+
 
 #endif //ENDLESS_RUNNER_OBJECT_H

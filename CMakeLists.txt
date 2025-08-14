@@ -11,7 +11,9 @@ add_executable(Endless_Runner main.cpp
         Game.cpp
         Game.h
         Object.cpp
-        Object.h)
+        Object.h
+        Obstacle.cpp
+        Obstacle.h)
 
 target_include_directories(Endless_Runner PRIVATE "${SDL2_DEV_DIR}/include")
 
