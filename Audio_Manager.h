@@ -32,23 +32,14 @@ private:
 
     map<string, Mix_Chunk*> m_sounds;
 public:
-    // Gets the single instance of the AudioManager
     static Audio_Manager& GetInstance()
     {
         static Audio_Manager instance;
         return instance;
     }
-
-    // Call this once at the start of the game
     void Init();
-
-    // Load a sound effect and give it a name
     void LoadSound(const string& name, const string& path);
-
-    // Play a loaded sound effect by name
     void PlaySound(const string& name);
-
-    // Call this once at the end of the game
     void CleanUp();
 };
 
