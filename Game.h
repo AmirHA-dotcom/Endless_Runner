@@ -22,12 +22,15 @@ private:
     deque<unique_ptr<Scenery>> m_Ground_Segments;
     deque<unique_ptr<Obstacle>> m_Obstacles;
 
+    float m_Obstacle_Spawn_Timer = 0.0f;
+
 public:
     Game();
     void Run();
 
     void Generate_Initial_Ground();
     void Update_Ground();
+    void Update_Spawning(float deltaTime);
 };
 
 

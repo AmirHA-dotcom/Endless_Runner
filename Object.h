@@ -87,7 +87,7 @@ private:
     float m_Width_Px;
     float m_Height_Px;
 public:
-    explicit Obstacle(b2WorldId worldId, float x, float y);
+    explicit Obstacle(b2WorldId worldId, float x, float y, float width, float height);
 
     ~Obstacle();
 

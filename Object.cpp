@@ -62,7 +62,7 @@ void Player::Jump()
     }
 
     b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
-    velocity.y = -20 .0f;
+    velocity.y = -20.0f;
     b2Body_SetLinearVelocity(Body_Id, velocity);
 
     // Use one jump
@@ -212,11 +212,11 @@ float Scenery::Get_Right_EdgeX() const
 }
 
 // Obstacles
-Obstacle::Obstacle(b2WorldId worldId, float x, float y)
+Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float height)
 {
     // Obstacle size
-    m_Width_Px = 50.0f;
-    m_Height_Px = 50.0f;
+    m_Width_Px = width;
+    m_Height_Px = height;
 
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.type = b2_staticBody;

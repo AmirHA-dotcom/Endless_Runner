@@ -79,9 +79,14 @@ void Game::Run()
     {
         frameStart = SDL_GetTicks();
 
+        // FPS
+        float timeStep = 1.0f / 60.0f;
+        b2World_Step(World_Id, timeStep, 3);
+
         // Updating
         m_Player->Update(World_Id);
         Update_Ground();
+        Update_Spawning(timeStep);
 
         while (SDL_PollEvent(&event))
         {
@@ -108,9 +113,6 @@ void Game::Run()
                 }
             }
         }
-        // FPS
-        float timeStep = 1.0f / 60.0f;
-        b2World_Step(World_Id, timeStep, 3);
 
         // Check if the Game is Over
         if (m_Player->IsDead())
@@ -201,19 +203,6 @@ void Game::Update_Ground()
     {
         float nextX = lastSegment->Get_Right_EdgeX();
         m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX));
-
-        // Give a 1 in 3 (67%) chance to spawn an obstacle on a new segment
-        if (rand() % 3 == 0)
-        {
-            // Calculate spawn position on top of the new ground segment
-            float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40 is the ground height
-            float obstacleHeight = 50.0f; // As defined in your Obstacle constructor
-
-            float spawnX = nextX + SCREEN_WIDTH / 2.0f; // Center of the new segment
-            float spawnY = groundSurfaceY - (obstacleHeight / 2.0f);
-
-            m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY));
-        }
     }
 
     // If the right edge of the first ground segment is off the left side of the screen, remove it.
@@ -225,5 +214,52 @@ void Game::Update_Ground()
     if (!m_Obstacles.empty() && m_Obstacles.front()->Get_Right_EdgeX() < cameraX)
     {
         m_Obstacles.pop_front();
+    }
+}
+
+void Game::Update_Spawning(float deltaTime)
+{
+    // Decrease the timer
+    m_Obstacle_Spawn_Timer -= deltaTime;
+
+    // If the timer has run out, it's time to spawn a new obstacle
+    if (m_Obstacle_Spawn_Timer <= 0.0f)
+    {
+        const float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40px ground height
+        float spawnX = cameraX + SCREEN_WIDTH + 100; // Spawn 100px off-screen to the right
+
+        // Randomly choose an obstacle type to spawn
+        int obstacleType = rand() % 3;
+
+        switch (obstacleType)
+        {
+            case 0: // Short Obstacle (jump over)
+            {
+                float width = 50.0f;
+                float height = 50.0f;
+                float spawnY = groundSurfaceY - (height / 2.0f);
+                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                break;
+            }
+            case 1: // Tall Obstacle (requires double jump)
+            {
+                float width = 50.0f;
+                float height = 150.0f;
+                float spawnY = groundSurfaceY - (height / 2.0f);
+                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                break;
+            }
+            case 2: // Wide Obstacle (requires precise jump timing)
+            {
+                float width = 200.0f;
+                float height = 50.0f;
+                float spawnY = groundSurfaceY - (height / 2.0f);
+                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                break;
+            }
+        }
+
+        float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
+        m_Obstacle_Spawn_Timer = randomTime;
     }
 }
