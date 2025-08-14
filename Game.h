@@ -7,6 +7,8 @@
 
 #include "Object.h"
 
+enum class STATE { MAIN_MENU, PLAYING, GAME_OVER };
+
 class Game
 {
 private:
@@ -15,7 +17,10 @@ private:
     b2WorldId World_Id;
     const char* FONT = "D:/Fonts/Roboto/static/Roboto-Regular.ttf";
     const float PIXELS_PER_METER = 30.0f;
-    TTF_Font* font;
+    TTF_Font* font_large;
+    TTF_Font* font_regular;
+
+    bool running = true;
 
     float cameraX = 0.0f;
 
@@ -27,6 +32,9 @@ private:
 
     int m_score = 0;
 
+    STATE m_current_State;
+    vector<int> m_high_Scores;
+
 public:
     Game();
     void Run();
@@ -36,7 +44,13 @@ public:
     void Update_Spawning(float deltaTime);
     void Update_Score();
     void Render_UI();
-
+    void Reset_Game();
+    void Render_Playing();
+    void Update_Playing(float timeStep);
+    void Update_GameOver(const SDL_Event& event);
+    void Render_GameOver();
+    void Update_MainMenu(const SDL_Event& event);
+    void Render_MainMenu();
 };
 
 

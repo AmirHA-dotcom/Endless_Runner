@@ -44,10 +44,16 @@ Game::Game()
         throw runtime_error("SDL_ttf could not initialize! TTF_Error: " + string(TTF_GetError()));
     }
 
-    font = TTF_OpenFont(FONT , 48);
-    if (!font)
+    font_large = TTF_OpenFont(FONT , 48);
+    if (!font_large)
     {
-        cerr << "Failed to load font: " << TTF_GetError() << endl;
+        cerr << "Failed to load font_large: " << TTF_GetError() << endl;
+    }
+
+    font_regular = TTF_OpenFont(FONT , 24);
+    if (!font_regular)
+    {
+        cerr << "Failed to load font_regular: " << TTF_GetError() << endl;
     }
 
     window = SDL_CreateWindow(
@@ -90,126 +96,52 @@ Game::Game()
 
 void Game::Run()
 {
-    // variables
-    bool Running = true;
     SDL_Event event;
     const int TARGET_FPS = 60;
-    const int FRAME_DELAY = 1000 / TARGET_FPS;
+    const float FRAME_DELAY = 1000.0f / TARGET_FPS;
     Uint32 frameStart;
     int frameTime;
 
-    // game loop
-    while (Running)
+    m_current_State = STATE::MAIN_MENU;
+
+    while (running)
     {
         frameStart = SDL_GetTicks();
-
-        // FPS
-        float timeStep = 1.0f / 60.0f;
-        b2World_Step(World_Id, timeStep, 3);
-
-        // Updating
-        m_Player->Update(World_Id);
-        Update_Ground();
-        Update_Spawning(timeStep);
-        Update_Score();
+        float timeStep = 1.0f / TARGET_FPS;
 
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
             {
-                Running = false;
-            }
-
-            if (event.type == SDL_KEYDOWN)
-            {
-                switch (event.key.keysym.sym)
-                {
-                    case SDLK_ESCAPE:
-                    {
-                        Running = false;
-                    }
-                    case SDLK_SPACE:
-                    {
-                        if (m_Player->Can_Jump())
-                        {
-                            m_Player->Jump();
-                        }
-                    }
-                }
+                running = false;
             }
         }
 
-        // Check if the Game is Over
-        if (m_Player->IsDead())
+        switch (m_current_State)
         {
-            cout << "Game Over!" << std::endl;
-            Running = false;
+            case STATE::MAIN_MENU:
+                Update_MainMenu(event);
+                Render_MainMenu();
+                break;
+
+            case STATE::PLAYING:
+                Update_Playing(timeStep);
+                Render_Playing();
+                break;
+
+            case STATE::GAME_OVER:
+                Update_GameOver(event);
+                Render_GameOver();
+                break;
         }
 
-        // Collision
-        if (!m_Player->IsDead())
-        {
-            b2Vec2 playerCenter = m_Player->get_position();
-            float playerRadius = m_Player->Get_Radius_Meters();
-
-            for (const auto& obstacle : m_Obstacles)
-            {
-                b2Vec2 obstacleCenter = obstacle->get_position();
-                float obstacleHalfWidth = obstacle->GetWidthMeters() / 2.0f;
-                float obstacleHalfHeight = obstacle->GetHeightMeters() / 2.0f;
-
-                float closestX = max(obstacleCenter.x - obstacleHalfWidth, min(playerCenter.x, obstacleCenter.x + obstacleHalfWidth));
-                float closestY = max(obstacleCenter.y - obstacleHalfHeight, min(playerCenter.y, obstacleCenter.y + obstacleHalfHeight));
-
-                float deltaX = playerCenter.x - closestX;
-                float deltaY = playerCenter.y - closestY;
-                float distanceSq = (deltaX * deltaX) + (deltaY * deltaY);
-
-                if (distanceSq < (playerRadius * playerRadius))
-                {
-                    m_Player->SetIsDead(true);
-                    cout << "Collision Detected! Game Over." << std::endl;
-                    break;
-                }
-            }
-        }
-
-        // Camara
-        b2Vec2 playerPosMeters = m_Player->get_position();
-        float playerPosPixelsX = playerPosMeters.x * PIXELS_PER_METER;
-
-        // The camera's position is its top-left corner
-        cameraX = playerPosPixelsX - (SCREEN_WIDTH / 2.0f);
-
-        // Rendering
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
-
-        m_Player->Render(renderer, cameraX);
-
-        for (const auto& segment : m_Ground_Segments)
-        {
-            segment->Render(renderer, cameraX);
-        }
-        for (const auto& obstacle : m_Obstacles)
-        {
-            obstacle->Render(renderer, cameraX);
-        }
-
-        Render_UI();
-
-        SDL_RenderPresent(renderer);
-
-        // FPS
         frameTime = SDL_GetTicks() - frameStart;
         if (FRAME_DELAY > frameTime)
         {
             SDL_Delay(FRAME_DELAY - frameTime);
         }
     }
-
 }
-
 void Game::Generate_Initial_Ground()
 {
     float currentX = 0.0f;
@@ -271,7 +203,7 @@ void Game::Update_Spawning(float deltaTime)
             case 1: // Tall Obstacle (requires double jump)
             {
                 float width = 50.0f;
-                float height = 150.0f;
+                float height = 125.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
                 m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
                 break;
@@ -320,5 +252,214 @@ void Game::Render_UI()
     string scoreText = "Score: " + to_string(m_score);
     SDL_Color textColor = { 50, 50, 50, 255 };
 
-    render_text(renderer, font, scoreText, SCREEN_WIDTH/2 - 75, 20, textColor);
+    render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
+}
+
+void Game::Reset_Game()
+{
+    m_score = 0;
+    m_Player->SetIsDead(false);
+
+    m_Player->Reset();
+
+    m_Obstacles.clear();
+    m_Ground_Segments.clear();
+
+    Generate_Initial_Ground();
+    cameraX = 0.0f;
+}
+
+void Game::Render_Playing()
+{
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+
+    m_Player->Render(renderer, cameraX);
+
+    for (const auto& segment : m_Ground_Segments)
+    {
+        segment->Render(renderer, cameraX);
+    }
+
+    for (const auto& obstacle : m_Obstacles)
+    {
+        obstacle->Render(renderer, cameraX);
+    }
+
+    Render_UI();
+
+    SDL_RenderPresent(renderer);
+}
+
+void Game::Update_Playing(float timeStep)
+{
+    // --- 1. Update Game Objects ---
+    // Update the player (handles automatic movement, resets jumps, etc.)
+    m_Player->Update(World_Id);
+
+    // Update world generation (creates/destroys ground and obstacles)
+    Update_Ground();
+    Update_Spawning(timeStep);
+    Update_Score();
+
+
+    // --- 2. Step the Physics World ---
+    // Advance the physics simulation by one time step
+    int32_t velocityIterations = 8;
+    int32_t positionIterations = 3;
+    b2World_Step(World_Id, timeStep, 3);
+
+    // --- 3. Check for Collisions ---
+    // This is the manual distance check for player vs. obstacles
+    if (!m_Player->IsDead())
+    {
+        b2Vec2 playerCenter = m_Player->get_position();
+        float playerRadius = m_Player->Get_Radius_Meters();
+
+        for (const auto& obstacle : m_Obstacles)
+        {
+            b2Vec2 obstacleCenter = obstacle->get_position();
+            float obstacleHalfWidth = obstacle->GetWidthMeters() / 2.0f;
+            float obstacleHalfHeight = obstacle->GetHeightMeters() / 2.0f;
+
+            // Find the closest point on the obstacle's box to the player's center
+            float closestX = std::max(obstacleCenter.x - obstacleHalfWidth, std::min(playerCenter.x, obstacleCenter.x + obstacleHalfWidth));
+            float closestY = std::max(obstacleCenter.y - obstacleHalfHeight, std::min(playerCenter.y, obstacleCenter.y + obstacleHalfHeight));
+
+            // Calculate squared distance from the player's center to this closest point
+            float deltaX = playerCenter.x - closestX;
+            float deltaY = playerCenter.y - closestY;
+            float distanceSq = (deltaX * deltaX) + (deltaY * deltaY);
+
+            // Compare that distance to the player's radius squared
+            if (distanceSq < (playerRadius * playerRadius))
+            {
+                m_Player->SetIsDead(true);
+                break; // Stop checking once a collision is found
+            }
+        }
+    }
+
+
+    // --- 4. Check for State Change ---
+    // If the collision check set the player to dead, change the game state
+    if (m_Player->IsDead())
+    {
+        // SaveScore(); // Optional: You would save the high score here
+        m_current_State = STATE::GAME_OVER;
+    }
+
+
+    // --- 5. Update the Camera ---
+    // Make the camera follow the player's new position
+    b2Vec2 playerPosMeters = m_Player->get_position();
+    float playerPosPixelsX = playerPosMeters.x * PIXELS_PER_METER;
+    cameraX = playerPosPixelsX - (SCREEN_WIDTH / 2.0f);
+}
+
+void Game::Update_GameOver(const SDL_Event& event)
+{
+    if (event.type == SDL_MOUSEBUTTONDOWN)
+    {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        SDL_Rect restartButton = {490, 400, 300, 50};
+        SDL_Rect menuButton = {490, 460, 300, 50};
+
+        if (SDL_PointInRect(new SDL_Point{mouseX, mouseY}, &restartButton))
+        {
+            Reset_Game();
+            m_current_State = STATE::PLAYING;
+        }
+        else if (SDL_PointInRect(new SDL_Point{mouseX, mouseY}, &menuButton))
+        {
+            m_current_State = STATE::MAIN_MENU;
+        }
+    }
+}
+
+void Game::Render_GameOver()
+{
+    // First, draw the last frame of the game
+    Render_Playing();
+
+    // Then, draw the game over UI on top
+    render_text(renderer, font_large, "Game Over", 480, 200);
+
+    string scoreText = "Final Score: " + to_string(m_score);
+    render_text(renderer, font_regular, scoreText, 520, 320);
+
+    // Draw buttons
+    render_text(renderer, font_regular, "Restart", 580, 400);
+    render_text(renderer, font_regular, "Main Menu", 550, 460);
+
+    SDL_RenderPresent(renderer);
+}
+
+void Game::Update_MainMenu(const SDL_Event& event)
+{
+    int mouseX, mouseY;
+    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+
+    // Define the areas for your buttons
+    SDL_Rect startButtonRect = { 540, 300, 200, 50 }; // x, y, width, height
+    SDL_Rect quitButtonRect = { 540, 360, 200, 50 };
+
+    // Check if the left mouse button was just clicked
+    if (mouseState & SDL_BUTTON(1))
+    {
+        SDL_Point mousePoint = { mouseX, mouseY };
+
+        // Check if the click was inside the Start button
+        if (SDL_PointInRect(&mousePoint, &startButtonRect))
+        {
+            Reset_Game();
+            m_current_State = STATE::PLAYING;
+        }
+        // Check if the click was inside the Quit button
+        else if (SDL_PointInRect(&mousePoint, &quitButtonRect))
+        {
+            running = false; // This will cause the main loop to exit
+        }
+    }
+}
+
+void Game::Render_MainMenu()
+{
+    // Clear the screen to a background color
+    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255); // Light grey
+    SDL_RenderClear(renderer);
+
+    // --- Draw Title ---
+    render_text(renderer, font_large, "Endless Runner", 450, 100);
+
+    // --- Draw Buttons ---
+    SDL_Rect startButtonRect = { 540, 300, 200, 50 };
+    SDL_Rect quitButtonRect = { 540, 360, 200, 50 };
+
+    // Draw button backgrounds
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Dark grey
+    SDL_RenderFillRect(renderer, &startButtonRect);
+    SDL_RenderFillRect(renderer, &quitButtonRect);
+
+    // Draw button text
+    render_text(renderer, font_regular, "Start", 600, 310);
+    render_text(renderer, font_regular, "Quit", 605, 370);
+
+    // --- Draw High Scores Box 🏆 ---
+    render_text(renderer, font_regular, "High Scores", 100, 250);
+
+    int yPos = 300;
+    // Loop through the loaded scores and display them
+    // (Ensure you have a LoadScores() function that fills m_highScores)
+    for (size_t i = 0; i < m_high_Scores.size() && i < 5; ++i) // Show top 5
+    {
+        std::string scoreText = std::to_string(i + 1) + ". " + std::to_string(m_high_Scores[i]);
+        render_text(renderer, font_regular, scoreText, 100, yPos);
+        yPos += 40; // Move down for the next score
+    }
+
+    // Present the final frame
+    SDL_RenderPresent(renderer);
 }

@@ -66,6 +66,8 @@ public:
 
     bool Is_On_Ground(b2WorldId worldId);
     bool Can_Jump() const;
+
+    void Reset();
 };
 
 class Scenery : public Object

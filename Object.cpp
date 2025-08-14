@@ -149,6 +149,11 @@ float Player::Get_Radius_Meters() const
     return actual_Radius * forgiveness_Factor;
 }
 
+void Player::Reset()
+{
+
+}
+
 
 // Scenery
 
