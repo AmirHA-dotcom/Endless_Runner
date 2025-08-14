@@ -224,7 +224,7 @@ void Game::Update_Spawning(float deltaTime)
             case 1: // Tall Obstacle (requires double jump)
             {
                 float width = 50.0f;
-                float height = 100.0f;
+                float height = 150.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
                 break;
@@ -270,75 +270,6 @@ void Game::Update_Spawning(float deltaTime)
         m_Obstacle_Spawn_Timer = randomTime;
     }
 }
-
-//void Game::Update_Spawning(float deltaTime)
-//{
-//    // Decrease the timer
-//    m_Obstacle_Spawn_Timer -= deltaTime;
-//
-//    // If the timer has run out, it's time to spawn a new obstacle
-//    if (m_Obstacle_Spawn_Timer <= 0.0f)
-//    {
-//        const float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40px ground height
-//        float spawnX = cameraX + SCREEN_WIDTH + 100; // Spawn 100px off-screen to the right
-//
-//        // Randomly choose an obstacle type to spawn
-//        int obstacleType = rand() % 3;
-//
-//        switch (obstacleType)
-//        {
-//            case 0: // Short Obstacle (jump over)
-//            {
-//                float width = 50.0f;
-//                float height = 50.0f;
-//                float spawnY = groundSurfaceY - (height / 2.0f);
-//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
-//                break;
-//            }
-//            case 1: // Tall Obstacle (requires double jump)
-//            {
-//                float width = 50.0f;
-//                float height = 125.0f;
-//                float spawnY = groundSurfaceY - (height / 2.0f);
-//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
-//                break;
-//            }
-//            case 2: // Wide Obstacle (requires precise jump timing)
-//            {
-//                float width = 200.0f;
-//                float height = 50.0f;
-//                float spawnY = groundSurfaceY - (height / 2.0f);
-//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
-//                break;
-//            }
-//        }
-//
-//        float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
-//        m_Obstacle_Spawn_Timer = randomTime;
-//    }
-//
-//    if (rand() % 4 == 0) // 25% chance to spawn a power-up
-//    {
-//        Obstacle* lastObstacle = m_Obstacles.back().get();
-//        b2Vec2 obstaclePos = lastObstacle->get_position();
-//        float obstacleWidth = lastObstacle->GetWidthMeters();
-//
-//        // Randomly choose a position relative to the obstacle
-//        int posType = rand() % 3;
-//        b2Vec2 powerUpPos;
-//        if (posType == 0) { // Before obstacle
-//            powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y - 1.5f };
-//        } else if (posType == 1) { // On top of obstacle
-//            powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
-//        } else { // After obstacle
-//            powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y - 1.5f };
-//        }
-//
-//        // Randomly choose a power-up type
-//        PowerUpType type = static_cast<PowerUpType>(rand() % 3);
-//        m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
-//    }
-//}
 
 void Game::Update_Score()
 {
@@ -457,7 +388,6 @@ void Game::Update_Playing(float timeStep)
             // Compare that distance to the player's radius squared
             if (distanceSq < (effectiveRadius * effectiveRadius))
             {
-                Audio_Manager::GetInstance().PlaySound("crash");
                 m_Player->SetIsDead(true);
                 break;
             }

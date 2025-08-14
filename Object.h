@@ -69,6 +69,8 @@ public:
     bool HasDoubleScore() { return m_doubleScoreTimer > 0.0f; }
     float get_extra_jump_timer() { return m_extraJumpTimer; }
     float get_double_score_timer() { return m_doubleScoreTimer; }
+    float GetWidthMeters() const { return 50.0f / PIXELS_PER_METER; }
+    float GetHeightMeters() const { return 50.0f / PIXELS_PER_METER; }
 };
 
 class Scenery : public Object

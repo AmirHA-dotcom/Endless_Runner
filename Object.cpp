@@ -51,8 +51,7 @@ Player::Player(b2WorldId worldId)
 
 bool Player::Can_Jump() const
 {
-    int maxJumps = (m_extraJumpTimer > 0) ? 3 : 2;
-    return m_jumps_Left > 0 && m_jumps_Left <= maxJumps;
+    return m_jumps_Left > 0;
 }
 
 void Player::Jump()
@@ -120,7 +119,14 @@ void Player::Update(b2WorldId worldId, float deltaTime)
 
         if (velocity.y >= 0.0f)
         {
-            m_jumps_Left = MAX_JUMPS;
+            if (m_extraJumpTimer > 0.0f)
+            {
+                m_jumps_Left = 3;
+            }
+            else
+            {
+                m_jumps_Left = MAX_JUMPS;
+            }
         }
     }
 
@@ -200,8 +206,6 @@ Scenery::Scenery(b2WorldId worldId, float startX)
 
     Body_Id = b2CreateBody(worldId, &groundBodyDef);
 
-    b2Polygon groundBox = b2MakeBox(m_Width_Meters / 2.0f, (Ground_Height_Px / 2.0f) / PIXELS_PER_METER);
-
     b2Filter filter;
     filter.categoryBits = GROUND_CATEGORY;
     filter.maskBits = PLAYER_CATEGORY;
@@ -209,6 +213,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
     groundShapeDef.filter = filter;
 
+    b2Polygon groundBox = b2MakeBox(m_Width_Meters / 2.0f, (Ground_Height_Px / 2.0f) / PIXELS_PER_METER);
     b2ShapeId ground_shape_ID = b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
 
     b2Shape_SetRestitution(ground_shape_ID, 0.0f);
@@ -269,7 +274,6 @@ Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float heigh
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
     // --- 2. Define the Shape and its Properties ---
-    // Define the hitbox geometry
     b2Polygon box = b2MakeBox(
             (m_Width_Px / 2.0f) / PIXELS_PER_METER,
             (m_Height_Px / 2.0f) / PIXELS_PER_METER
@@ -284,7 +288,7 @@ Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float heigh
     // Define the shape's properties using the filter
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     shapeDef.filter = filter;      // Apply the collision filter
-    shapeDef.isSensor = false;     // This makes the obstacle SOLID
+    shapeDef.isSensor = true;     // This makes the obstacle Sensor
 
     // --- 3. Create the Shape in the World ---
     // Create the shape and get its ID
