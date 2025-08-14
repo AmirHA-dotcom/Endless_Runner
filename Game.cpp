@@ -104,9 +104,44 @@ void Game::Run()
         float timeStep = 1.0f / 60.0f;
         b2World_Step(World_Id, timeStep, 3);
 
+        // Check if the Game is Over
+        if (m_Player->IsDead())
+        {
+            cout << "Game Over!" << std::endl;
+            Running = false;
+        }
+
         // Updating
         m_Player->Update();
         Update_Ground();
+
+        // Collision
+        if (!m_Player->IsDead())
+        {
+            b2Vec2 playerCenter = m_Player->get_position();
+            float playerRadius = m_Player->Get_Radius_Meters();
+
+            for (const auto& obstacle : m_Obstacles)
+            {
+                b2Vec2 obstacleCenter = obstacle->get_position();
+                float obstacleHalfWidth = obstacle->GetWidthMeters() / 2.0f;
+                float obstacleHalfHeight = obstacle->GetHeightMeters() / 2.0f;
+
+                float closestX = max(obstacleCenter.x - obstacleHalfWidth, min(playerCenter.x, obstacleCenter.x + obstacleHalfWidth));
+                float closestY = max(obstacleCenter.y - obstacleHalfHeight, min(playerCenter.y, obstacleCenter.y + obstacleHalfHeight));
+
+                float deltaX = playerCenter.x - closestX;
+                float deltaY = playerCenter.y - closestY;
+                float distanceSq = (deltaX * deltaX) + (deltaY * deltaY);
+
+                if (distanceSq < (playerRadius * playerRadius))
+                {
+                    m_Player->SetIsDead(true);
+                    cout << "Collision Detected! Game Over." << std::endl;
+                    break;
+                }
+            }
+        }
 
         // Camara
         b2Vec2 playerPosMeters = m_Player->get_position();
@@ -163,8 +198,8 @@ void Game::Update_Ground()
         float nextX = lastSegment->Get_Right_EdgeX();
         m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX));
 
-        // Give a 1 in 4 (25%) chance to spawn an obstacle on a new segment
-        if (rand() % 4 == 0)
+        // Give a 1 in 3 (67%) chance to spawn an obstacle on a new segment
+        if (rand() % 3 == 0)
         {
             // Calculate spawn position on top of the new ground segment
             float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40 is the ground height

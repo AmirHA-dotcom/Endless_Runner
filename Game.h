@@ -5,7 +5,7 @@
 #ifndef ENDLESS_RUNNER_GAME_H
 #define ENDLESS_RUNNER_GAME_H
 
-#include "Obstacle.h"
+#include "Object.h"
 
 class Game
 {

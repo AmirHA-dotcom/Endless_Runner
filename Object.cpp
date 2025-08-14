@@ -8,21 +8,28 @@
 
 Player::Player(b2WorldId worldId)
 {
-    const float PLAYER_HALF_WIDTH_PX = 25.0f;
-    const float PLAYER_HALF_HEIGHT_PX = 25.0f;
+    is_Dead = false;
+    const float PLAYER_RADIUS_PX = 25.0f;
 
+    // Define the body's properties
     b2BodyDef body_def = b2DefaultBodyDef();
     body_def.type = b2_dynamicBody;
-    body_def.position = { 400 / PIXELS_PER_METER , 400 / PIXELS_PER_METER };
+    body_def.position = { 400.0f / PIXELS_PER_METER, 400.0f / PIXELS_PER_METER };
+    body_def.userData = this;
+
+    // Create the body
     Body_Id = b2CreateBody(worldId, &body_def);
 
-    b2Polygon dynamic_box = b2MakeBox(PLAYER_HALF_WIDTH_PX / PIXELS_PER_METER, PLAYER_HALF_HEIGHT_PX / PIXELS_PER_METER);
+    b2Circle circle;
+    circle.radius = PLAYER_RADIUS_PX / PIXELS_PER_METER;
+
     b2ShapeDef dynamic_shape_def = b2DefaultShapeDef();
     dynamic_shape_def.density = 1.0f;
 
-    b2ShapeId box_shape_ID = b2CreatePolygonShape(Body_Id, &dynamic_shape_def, &dynamic_box);
-    b2Shape_SetFriction(box_shape_ID, 0.3f);
-    b2Shape_SetRestitution(box_shape_ID, 0.5f);
+    b2ShapeId circle_shape_ID = b2CreateCircleShape(Body_Id, &dynamic_shape_def, &circle);
+
+    b2Shape_SetFriction(circle_shape_ID, 0.7f);
+    b2Shape_SetRestitution(circle_shape_ID, 0.0f);
 }
 
 void Player::Jump()
@@ -51,6 +58,8 @@ void Player::Move_Left()
 
 void Player::Update()
 {
+    b2Body_SetAngularVelocity(Body_Id, 0.0f);
+
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
 
     if (keyboardState[SDL_SCANCODE_D])
@@ -95,11 +104,17 @@ Scenery::Scenery(b2WorldId worldId, float startX)
             (SCREEN_HEIGHT - (Ground_Height_Px / 2.0f)) / PIXELS_PER_METER
     };
 
+    groundBodyDef.userData = this;
+
     Body_Id = b2CreateBody(worldId, &groundBodyDef);
 
     b2Polygon groundBox = b2MakeBox(m_Width_Meters / 2.0f, (Ground_Height_Px / 2.0f) / PIXELS_PER_METER);
     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
-    b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
+
+    b2ShapeId ground_shape_ID = b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
+
+    b2Shape_SetRestitution(ground_shape_ID, 0.0f);
+    b2Shape_SetFriction(ground_shape_ID, 0.7f);
 }
 
 void Scenery::Update()
@@ -136,4 +151,63 @@ float Scenery::Get_Right_EdgeX() const
 {
     b2Vec2 pos = b2Body_GetPosition(Body_Id);
     return (pos.x + m_Width_Meters / 2.0f) * PIXELS_PER_METER;
+}
+
+// Obstacles
+Obstacle::Obstacle(b2WorldId worldId, float x, float y)
+{
+    // Obstacle size
+    m_Width_Px = 50.0f;
+    m_Height_Px = 50.0f;
+
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_staticBody;
+
+    // Set its position based on the arguments
+    bodyDef.position = { x / PIXELS_PER_METER, y / PIXELS_PER_METER };
+
+    // Tag the body with a pointer to this object
+    bodyDef.userData = this;
+
+    Body_Id = b2CreateBody(worldId, &bodyDef);
+
+    // hitbox shape
+    b2Polygon box = b2MakeBox(
+            (m_Width_Px / 2.0f) / PIXELS_PER_METER,
+            (m_Height_Px / 2.0f) / PIXELS_PER_METER
+    );
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    b2CreatePolygonShape(Body_Id, &shapeDef, &box);
+}
+
+void Obstacle::Render(SDL_Renderer* renderer, float cameraX)
+{
+    const float visual_Y_Offset = 20.0f;
+
+    b2Vec2 position = b2Body_GetPosition(Body_Id);
+    SDL_Rect rect = {
+            (int)((position.x * PIXELS_PER_METER) - (m_Width_Px / 2.0f) - cameraX),
+            (int)((position.y * PIXELS_PER_METER) - (m_Height_Px / 2.0f) + visual_Y_Offset),
+            (int)m_Width_Px,
+            (int)m_Height_Px
+    };
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+Obstacle::~Obstacle() noexcept
+{
+
+}
+
+void Obstacle::Update()
+{
+
+}
+
+float Obstacle::Get_Right_EdgeX() const
+{
+    b2Vec2 pos = b2Body_GetPosition(Body_Id);
+    return (pos.x * PIXELS_PER_METER) + (m_Width_Px / 2.0f);
 }

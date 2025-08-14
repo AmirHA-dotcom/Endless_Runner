@@ -6,6 +6,7 @@
 #define ENDLESS_RUNNER_OBJECT_H
 
 #include <box2d/box2d.h>
+#include "box2d/collision.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>
@@ -37,6 +38,8 @@ public:
 
 class Player : public Object
 {
+private:
+    bool is_Dead;
 public:
     explicit Player(b2WorldId WID);
     const float PLAYER_SPEED = 40.0f;
@@ -49,6 +52,10 @@ public:
     void Move_Left();
 
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
+
+    bool IsDead() const { return is_Dead; }
+    void SetIsDead(bool isDead) { is_Dead = isDead; }
+    float Get_Radius_Meters() const { return 25.0f / PIXELS_PER_METER; }
 };
 
 class Scenery : public Object
@@ -62,6 +69,26 @@ public:
     void Update() override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
+};
+
+class Obstacle : public Object
+{
+private:
+    float m_Width_Px;
+    float m_Height_Px;
+public:
+    explicit Obstacle(b2WorldId worldId, float x, float y);
+
+    ~Obstacle();
+
+    void Update() override;
+    void Render(SDL_Renderer* renderer, float cameraX) override;
+    float Get_Right_EdgeX() const;
+    b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
+
+    float GetWidthMeters() const { return m_Width_Px / PIXELS_PER_METER; }
+    float GetHeightMeters() const { return m_Height_Px / PIXELS_PER_METER; }
+
 };
 
 
