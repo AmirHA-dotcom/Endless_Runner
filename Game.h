@@ -51,6 +51,12 @@ public:
     void Render_GameOver();
     void Update_MainMenu(const SDL_Event& event);
     void Render_MainMenu();
+    void HandleEvents_Playing(const SDL_Event& event);
+    void HandleEvents_MainMenu(const SDL_Event& event);
+    void HandleEvents_GameOver(const SDL_Event& event);
+    void Save_Scores();
+    void Load_Scores();
+    void Update_High_Scores();
 };
 
 

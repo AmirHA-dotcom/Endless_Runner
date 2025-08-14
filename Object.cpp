@@ -151,7 +151,12 @@ float Player::Get_Radius_Meters() const
 
 void Player::Reset()
 {
+    b2Vec2 startPosition = { 300.0f / PIXELS_PER_METER, 700.0f / PIXELS_PER_METER };
+    //b2Body_SetTransform(Body_Id, startPosition, 0.0f); // Set position and angle
+    b2Body_SetLinearVelocity(Body_Id, b2Vec2_zero);    // Stop all movement
+    b2Body_SetAngularVelocity(Body_Id, 0.0f);          // Stop all rotation
 
+    m_jumps_Left = MAX_JUMPS;
 }
 
 

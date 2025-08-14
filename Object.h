@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
+#include <algorithm>
 
 using namespace std;
 

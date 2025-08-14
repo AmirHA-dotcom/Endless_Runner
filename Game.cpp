@@ -80,6 +80,8 @@ Game::Game()
         throw runtime_error("Renderer could not be created! SDL_Error: " + string(SDL_GetError()));
     }
 
+    Load_Scores();
+
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = {0.0f, 50.0f};
@@ -96,31 +98,42 @@ Game::Game()
 
 void Game::Run()
 {
-    SDL_Event event;
+    running = true;
+    m_current_State = STATE::MAIN_MENU;
     const int TARGET_FPS = 60;
     const float FRAME_DELAY = 1000.0f / TARGET_FPS;
     Uint32 frameStart;
-    int frameTime;
-
-    m_current_State = STATE::MAIN_MENU;
 
     while (running)
     {
         frameStart = SDL_GetTicks();
         float timeStep = 1.0f / TARGET_FPS;
 
+        SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
             {
                 running = false;
             }
+
+            switch (m_current_State)
+            {
+                case STATE::MAIN_MENU:
+                    HandleEvents_MainMenu(event);
+                    break;
+                case STATE::PLAYING:
+                    HandleEvents_Playing(event);
+                    break;
+                case STATE::GAME_OVER:
+                    HandleEvents_GameOver(event);
+                    break;
+            }
         }
 
         switch (m_current_State)
         {
             case STATE::MAIN_MENU:
-                Update_MainMenu(event);
                 Render_MainMenu();
                 break;
 
@@ -130,18 +143,19 @@ void Game::Run()
                 break;
 
             case STATE::GAME_OVER:
-                Update_GameOver(event);
                 Render_GameOver();
                 break;
         }
+        SDL_RenderPresent(renderer);
 
-        frameTime = SDL_GetTicks() - frameStart;
+        int frameTime = SDL_GetTicks() - frameStart;
         if (FRAME_DELAY > frameTime)
         {
             SDL_Delay(FRAME_DELAY - frameTime);
         }
     }
 }
+
 void Game::Generate_Initial_Ground()
 {
     float currentX = 0.0f;
@@ -267,6 +281,8 @@ void Game::Reset_Game()
 
     Generate_Initial_Ground();
     cameraX = 0.0f;
+
+    m_Obstacle_Spawn_Timer = 3.0f;
 }
 
 void Game::Render_Playing()
@@ -287,30 +303,21 @@ void Game::Render_Playing()
     }
 
     Render_UI();
-
-    SDL_RenderPresent(renderer);
 }
 
 void Game::Update_Playing(float timeStep)
 {
     // --- 1. Update Game Objects ---
-    // Update the player (handles automatic movement, resets jumps, etc.)
     m_Player->Update(World_Id);
 
-    // Update world generation (creates/destroys ground and obstacles)
     Update_Ground();
     Update_Spawning(timeStep);
     Update_Score();
 
-
     // --- 2. Step the Physics World ---
-    // Advance the physics simulation by one time step
-    int32_t velocityIterations = 8;
-    int32_t positionIterations = 3;
     b2World_Step(World_Id, timeStep, 3);
 
     // --- 3. Check for Collisions ---
-    // This is the manual distance check for player vs. obstacles
     if (!m_Player->IsDead())
     {
         b2Vec2 playerCenter = m_Player->get_position();
@@ -340,43 +347,17 @@ void Game::Update_Playing(float timeStep)
         }
     }
 
-
     // --- 4. Check for State Change ---
-    // If the collision check set the player to dead, change the game state
     if (m_Player->IsDead())
     {
-        // SaveScore(); // Optional: You would save the high score here
+        Update_High_Scores();
         m_current_State = STATE::GAME_OVER;
     }
 
-
     // --- 5. Update the Camera ---
-    // Make the camera follow the player's new position
     b2Vec2 playerPosMeters = m_Player->get_position();
     float playerPosPixelsX = playerPosMeters.x * PIXELS_PER_METER;
     cameraX = playerPosPixelsX - (SCREEN_WIDTH / 2.0f);
-}
-
-void Game::Update_GameOver(const SDL_Event& event)
-{
-    if (event.type == SDL_MOUSEBUTTONDOWN)
-    {
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-
-        SDL_Rect restartButton = {490, 400, 300, 50};
-        SDL_Rect menuButton = {490, 460, 300, 50};
-
-        if (SDL_PointInRect(new SDL_Point{mouseX, mouseY}, &restartButton))
-        {
-            Reset_Game();
-            m_current_State = STATE::PLAYING;
-        }
-        else if (SDL_PointInRect(new SDL_Point{mouseX, mouseY}, &menuButton))
-        {
-            m_current_State = STATE::MAIN_MENU;
-        }
-    }
 }
 
 void Game::Render_GameOver()
@@ -385,58 +366,29 @@ void Game::Render_GameOver()
     Render_Playing();
 
     // Then, draw the game over UI on top
-    render_text(renderer, font_large, "Game Over", 480, 200);
+    render_text(renderer, font_large, "Game Over", SCREEN_WIDTH / 2 - 120, 200);
 
     string scoreText = "Final Score: " + to_string(m_score);
-    render_text(renderer, font_regular, scoreText, 520, 320);
+    render_text(renderer, font_regular, scoreText, SCREEN_WIDTH / 2 - 75, 320);
 
     // Draw buttons
-    render_text(renderer, font_regular, "Restart", 580, 400);
-    render_text(renderer, font_regular, "Main Menu", 550, 460);
-
-    SDL_RenderPresent(renderer);
-}
-
-void Game::Update_MainMenu(const SDL_Event& event)
-{
-    int mouseX, mouseY;
-    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-
-    // Define the areas for your buttons
-    SDL_Rect startButtonRect = { 540, 300, 200, 50 }; // x, y, width, height
-    SDL_Rect quitButtonRect = { 540, 360, 200, 50 };
-
-    // Check if the left mouse button was just clicked
-    if (mouseState & SDL_BUTTON(1))
-    {
-        SDL_Point mousePoint = { mouseX, mouseY };
-
-        // Check if the click was inside the Start button
-        if (SDL_PointInRect(&mousePoint, &startButtonRect))
-        {
-            Reset_Game();
-            m_current_State = STATE::PLAYING;
-        }
-        // Check if the click was inside the Quit button
-        else if (SDL_PointInRect(&mousePoint, &quitButtonRect))
-        {
-            running = false; // This will cause the main loop to exit
-        }
-    }
+    render_text(renderer, font_regular, "Restart", SCREEN_WIDTH / 2 - 45, 400);
+    render_text(renderer, font_regular, "Main Menu", SCREEN_WIDTH / 2 - 65, 460);
 }
 
 void Game::Render_MainMenu()
 {
-    // Clear the screen to a background color
-    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255); // Light grey
-    SDL_RenderClear(renderer);
+//    // Clear the screen to a background color
+//    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
+//    SDL_RenderClear(renderer);
+    Render_Playing();
 
     // --- Draw Title ---
-    render_text(renderer, font_large, "Endless Runner", 450, 100);
+    render_text(renderer, font_large, "Endless Runner", SCREEN_WIDTH / 2 - 150, 100);
 
     // --- Draw Buttons ---
-    SDL_Rect startButtonRect = { 540, 300, 200, 50 };
-    SDL_Rect quitButtonRect = { 540, 360, 200, 50 };
+    SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 300, 200, 50 };
+    SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
 
     // Draw button backgrounds
     SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Dark grey
@@ -444,22 +396,136 @@ void Game::Render_MainMenu()
     SDL_RenderFillRect(renderer, &quitButtonRect);
 
     // Draw button text
-    render_text(renderer, font_regular, "Start", 600, 310);
-    render_text(renderer, font_regular, "Quit", 605, 370);
+    render_text(renderer, font_regular, "Start", SCREEN_WIDTH / 2 - 25, 310);
+    render_text(renderer, font_regular, "Quit", SCREEN_WIDTH / 2 - 20, 370);
 
-    // --- Draw High Scores Box 🏆 ---
+    // --- Draw High Scores Box ---
     render_text(renderer, font_regular, "High Scores", 100, 250);
 
     int yPos = 300;
-    // Loop through the loaded scores and display them
-    // (Ensure you have a LoadScores() function that fills m_highScores)
-    for (size_t i = 0; i < m_high_Scores.size() && i < 5; ++i) // Show top 5
+    for (size_t i = 0; i < m_high_Scores.size() && i < 5; ++i)
     {
-        std::string scoreText = std::to_string(i + 1) + ". " + std::to_string(m_high_Scores[i]);
+        string scoreText = to_string(i + 1) + ". " + to_string(m_high_Scores[i]);
         render_text(renderer, font_regular, scoreText, 100, yPos);
-        yPos += 40; // Move down for the next score
+        yPos += 40;
+    }
+}
+
+void Game::HandleEvents_Playing(const SDL_Event& event)
+{
+    if (event.type == SDL_KEYDOWN)
+    {
+        if (event.key.keysym.sym == SDLK_SPACE)
+        {
+            if (m_Player->Can_Jump())
+            {
+                m_Player->Jump();
+            }
+        }
+    }
+}
+
+void Game::HandleEvents_MainMenu(const SDL_Event& event)
+{
+    if (event.type == SDL_MOUSEBUTTONDOWN)
+    {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        SDL_Point mousePoint = { mouseX, mouseY };
+
+        SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 300, 200, 50 };
+        SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
+
+        if (SDL_PointInRect(&mousePoint, &startButtonRect))
+        {
+            Reset_Game();
+            m_current_State = STATE::PLAYING;
+        }
+        else if (SDL_PointInRect(&mousePoint, &quitButtonRect))
+        {
+            running = false;
+        }
+    }
+}
+
+void Game::HandleEvents_GameOver(const SDL_Event& event)
+{
+    if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+    {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        SDL_Point mousePoint = { mouseX, mouseY };
+
+        int restartTextW, restartTextH;
+        TTF_SizeText(font_regular, "Restart", &restartTextW, &restartTextH);
+        SDL_Rect restartButtonRect = {
+                SCREEN_WIDTH / 2 - restartTextW / 2,
+                400,
+                restartTextW,
+                restartTextH
+        };
+
+        int menuTextW, menuTextH;
+        TTF_SizeText(font_regular, "Main Menu", &menuTextW, &menuTextH);
+        SDL_Rect menuButtonRect = {
+                SCREEN_WIDTH / 2 - menuTextW / 2,
+                460,
+                menuTextW,
+                menuTextH
+        };
+
+        if (SDL_PointInRect(&mousePoint, &restartButtonRect))
+        {
+            Reset_Game();
+            m_current_State = STATE::PLAYING;
+        }
+        else if (SDL_PointInRect(&mousePoint, &menuButtonRect))
+        {
+            m_current_State = STATE::MAIN_MENU;
+        }
+    }
+}
+
+// Saving Scores
+
+void Game::Save_Scores()
+{
+    ofstream scoreFile("scores.txt");
+    if (scoreFile.is_open())
+    {
+        for (int score : m_high_Scores)
+        {
+            scoreFile << score << endl;
+        }
+        scoreFile.close();
+    }
+}
+
+void Game::Load_Scores()
+{
+    ifstream scoreFile("scores.txt");
+    if (scoreFile.is_open())
+    {
+        m_high_Scores.clear();
+        string line;
+        while (getline(scoreFile, line))
+        {
+            m_high_Scores.push_back(stoi(line));
+        }
+        scoreFile.close();
+    }
+}
+
+void Game::Update_High_Scores()
+{
+    m_high_Scores.push_back(m_score);
+
+    sort(m_high_Scores.begin(), m_high_Scores.end(), std::greater<int>());
+
+    if (m_high_Scores.size() > 5)
+    {
+        m_high_Scores.resize(5);
     }
 
-    // Present the final frame
-    SDL_RenderPresent(renderer);
+    Save_Scores();
 }
