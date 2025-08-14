@@ -391,9 +391,9 @@ void Game::Render_MainMenu()
     SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
 
     // Draw button backgrounds
-    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Dark grey
-    SDL_RenderFillRect(renderer, &startButtonRect);
-    SDL_RenderFillRect(renderer, &quitButtonRect);
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    SDL_RenderDrawRect(renderer, &startButtonRect);
+    SDL_RenderDrawRect(renderer, &quitButtonRect);
 
     // Draw button text
     render_text(renderer, font_regular, "Start", SCREEN_WIDTH / 2 - 25, 310);
