@@ -62,7 +62,7 @@ public:
 
     bool IsDead() const { return is_Dead; }
     void SetIsDead(bool isDead) { is_Dead = isDead; }
-    float Get_Radius_Meters() const { return 25.0f / PIXELS_PER_METER; }
+    float Get_Radius_Meters() const;
 
     bool Is_On_Ground(b2WorldId worldId);
     bool Can_Jump() const;
@@ -86,6 +86,8 @@ class Obstacle : public Object
 private:
     float m_Width_Px;
     float m_Height_Px;
+
+    bool m_isScored = false;
 public:
     explicit Obstacle(b2WorldId worldId, float x, float y, float width, float height);
 
@@ -99,6 +101,8 @@ public:
     float GetWidthMeters() const { return m_Width_Px / PIXELS_PER_METER; }
     float GetHeightMeters() const { return m_Height_Px / PIXELS_PER_METER; }
 
+    bool Is_Scored() const { return m_isScored; }
+    void Set_Scored(bool scored) { m_isScored = scored; }
 };
 
 

@@ -17,6 +17,7 @@ inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, flo
     return 0.0f;
 }
 
+
 // Player
 
 Player::Player(b2WorldId worldId)
@@ -140,6 +141,14 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     SDL_RenderFillRect(renderer, &player_rect);
 }
+
+float Player::Get_Radius_Meters() const
+{
+    const float actual_Radius = 25.0f / PIXELS_PER_METER;
+    const float forgiveness_Factor = 0.85f;
+    return actual_Radius * forgiveness_Factor;
+}
+
 
 // Scenery
 

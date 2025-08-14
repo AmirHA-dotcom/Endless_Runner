@@ -4,6 +4,30 @@
 
 #include "Game.h"
 
+// helper
+
+inline void render_text(SDL_Renderer* renderer, TTF_Font* font, const string& text, int x, int y, SDL_Color color = {0, 0, 0, 255})
+{
+    if (!font) return;
+
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+    if (!surface) return;
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (!texture) {
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    SDL_Rect dest_rect = {x, y, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &dest_rect);
+
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(surface);
+}
+
+// Functions
+
 Game::Game()
 {
     srand(time(0));
@@ -20,7 +44,7 @@ Game::Game()
         throw runtime_error("SDL_ttf could not initialize! TTF_Error: " + string(TTF_GetError()));
     }
 
-    TTF_Font* font = TTF_OpenFont(FONT , 16);
+    font = TTF_OpenFont(FONT , 48);
     if (!font)
     {
         cerr << "Failed to load font: " << TTF_GetError() << endl;
@@ -52,7 +76,7 @@ Game::Game()
 
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity = {0.0f, 40.0f};
+    worldDef.gravity = {0.0f, 50.0f};
     World_Id = b2CreateWorld(&worldDef);
 
     // Window size
@@ -87,6 +111,7 @@ void Game::Run()
         m_Player->Update(World_Id);
         Update_Ground();
         Update_Spawning(timeStep);
+        Update_Score();
 
         while (SDL_PollEvent(&event))
         {
@@ -170,6 +195,8 @@ void Game::Run()
         {
             obstacle->Render(renderer, cameraX);
         }
+
+        Render_UI();
 
         SDL_RenderPresent(renderer);
 
@@ -262,4 +289,36 @@ void Game::Update_Spawning(float deltaTime)
         float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
         m_Obstacle_Spawn_Timer = randomTime;
     }
+}
+
+void Game::Update_Score()
+{
+    // Get the player's current X position in meters
+    float playerX = m_Player->get_position().x;
+
+    // Loop through all obstacles
+    for (const auto& obstacle : m_Obstacles)
+    {
+        // Check if the obstacle hasn't been scored yet
+        if (!obstacle->Is_Scored())
+        {
+            float obstacleX = obstacle->get_position().x;
+
+            // If the player has moved past the obstacle
+            if (playerX > obstacleX)
+            {
+                m_score++;
+                obstacle->Set_Scored(true);
+                cout << "Score: " << m_score << endl;
+            }
+        }
+    }
+}
+
+void Game::Render_UI()
+{
+    string scoreText = "Score: " + to_string(m_score);
+    SDL_Color textColor = { 50, 50, 50, 255 };
+
+    render_text(renderer, font, scoreText, SCREEN_WIDTH/2 - 75, 20, textColor);
 }

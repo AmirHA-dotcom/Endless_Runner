@@ -15,6 +15,7 @@ private:
     b2WorldId World_Id;
     const char* FONT = "D:/Fonts/Roboto/static/Roboto-Regular.ttf";
     const float PIXELS_PER_METER = 30.0f;
+    TTF_Font* font;
 
     float cameraX = 0.0f;
 
@@ -24,6 +25,8 @@ private:
 
     float m_Obstacle_Spawn_Timer = 0.0f;
 
+    int m_score = 0;
+
 public:
     Game();
     void Run();
@@ -31,6 +34,9 @@ public:
     void Generate_Initial_Ground();
     void Update_Ground();
     void Update_Spawning(float deltaTime);
+    void Update_Score();
+    void Render_UI();
+
 };
 
 
