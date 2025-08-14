@@ -105,14 +105,15 @@ void Game::Run()
 {
     running = true;
     m_current_State = STATE::MAIN_MENU;
+
     const int TARGET_FPS = 60;
     const float FRAME_DELAY = 1000.0f / TARGET_FPS;
+    float timeStep = 1.0f / TARGET_FPS;
     Uint32 frameStart;
 
     while (running)
     {
         frameStart = SDL_GetTicks();
-        float timeStep = 1.0f / TARGET_FPS;
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -197,17 +198,18 @@ void Game::Update_Ground()
 
 void Game::Update_Spawning(float deltaTime)
 {
-    // Decrease the timer
+    // Decrease the spawn timer by the time elapsed this frame
     m_Obstacle_Spawn_Timer -= deltaTime;
 
-    // If the timer has run out, it's time to spawn a new obstacle
+    // If the timer has run out, it's time to spawn something
     if (m_Obstacle_Spawn_Timer <= 0.0f)
     {
+        // --- 1. Spawn an Obstacle ---
         const float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40px ground height
         float spawnX = cameraX + SCREEN_WIDTH + 100; // Spawn 100px off-screen to the right
 
-        // Randomly choose an obstacle type to spawn
-        int obstacleType = rand() % 3;
+        // Randomly choose which type of obstacle to create
+        int obstacleType = rand() % 3; // Random number between 0 and 2
 
         switch (obstacleType)
         {
@@ -216,31 +218,127 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 50.0f;
                 float height = 50.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
                 break;
             }
             case 1: // Tall Obstacle (requires double jump)
             {
                 float width = 50.0f;
-                float height = 125.0f;
+                float height = 100.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
                 break;
             }
             case 2: // Wide Obstacle (requires precise jump timing)
             {
-                float width = 200.0f;
-                float height = 50.0f;
+                float width = 150.0f;
+                float height = 25.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
                 break;
             }
         }
 
+        // --- 2. Potentially Spawn a Power-Up ---
+        // Only try to spawn a power-up if an obstacle was just created.
+        if (!m_Obstacles.empty() && rand() % 4 == 0) // 25% chance
+        {
+            Obstacle* lastObstacle = m_Obstacles.back().get();
+            b2Vec2 obstaclePos = lastObstacle->get_position();
+            float obstacleWidth = lastObstacle->GetWidthMeters();
+
+            // Randomly choose a position relative to the obstacle
+            int posType = rand() % 3;
+            b2Vec2 powerUpPos;
+
+            if (posType == 0) { // Before obstacle
+                powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y - 1.5f };
+            } else if (posType == 1) { // On top of obstacle
+                powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
+            } else { // After obstacle
+                powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y - 1.5f };
+            }
+
+            // Randomly choose a power-up type
+            PowerUpType type = static_cast<PowerUpType>(rand() % 3);
+            m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
+        }
+
+        // --- 3. Reset the Timer ---
+        // Set the timer for the *next* obstacle to a new random duration.
         float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
         m_Obstacle_Spawn_Timer = randomTime;
     }
 }
+
+//void Game::Update_Spawning(float deltaTime)
+//{
+//    // Decrease the timer
+//    m_Obstacle_Spawn_Timer -= deltaTime;
+//
+//    // If the timer has run out, it's time to spawn a new obstacle
+//    if (m_Obstacle_Spawn_Timer <= 0.0f)
+//    {
+//        const float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40px ground height
+//        float spawnX = cameraX + SCREEN_WIDTH + 100; // Spawn 100px off-screen to the right
+//
+//        // Randomly choose an obstacle type to spawn
+//        int obstacleType = rand() % 3;
+//
+//        switch (obstacleType)
+//        {
+//            case 0: // Short Obstacle (jump over)
+//            {
+//                float width = 50.0f;
+//                float height = 50.0f;
+//                float spawnY = groundSurfaceY - (height / 2.0f);
+//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+//                break;
+//            }
+//            case 1: // Tall Obstacle (requires double jump)
+//            {
+//                float width = 50.0f;
+//                float height = 125.0f;
+//                float spawnY = groundSurfaceY - (height / 2.0f);
+//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+//                break;
+//            }
+//            case 2: // Wide Obstacle (requires precise jump timing)
+//            {
+//                float width = 200.0f;
+//                float height = 50.0f;
+//                float spawnY = groundSurfaceY - (height / 2.0f);
+//                m_Obstacles.push_back(make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+//                break;
+//            }
+//        }
+//
+//        float randomTime = 1.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
+//        m_Obstacle_Spawn_Timer = randomTime;
+//    }
+//
+//    if (rand() % 4 == 0) // 25% chance to spawn a power-up
+//    {
+//        Obstacle* lastObstacle = m_Obstacles.back().get();
+//        b2Vec2 obstaclePos = lastObstacle->get_position();
+//        float obstacleWidth = lastObstacle->GetWidthMeters();
+//
+//        // Randomly choose a position relative to the obstacle
+//        int posType = rand() % 3;
+//        b2Vec2 powerUpPos;
+//        if (posType == 0) { // Before obstacle
+//            powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y - 1.5f };
+//        } else if (posType == 1) { // On top of obstacle
+//            powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
+//        } else { // After obstacle
+//            powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y - 1.5f };
+//        }
+//
+//        // Randomly choose a power-up type
+//        PowerUpType type = static_cast<PowerUpType>(rand() % 3);
+//        m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
+//    }
+//}
 
 void Game::Update_Score()
 {
@@ -258,7 +356,8 @@ void Game::Update_Score()
             // If the player has moved past the obstacle
             if (playerX > obstacleX)
             {
-                m_score++;
+                int points = (m_Player->HasDoubleScore()) ? 2 : 1; // New method in Player
+                m_score += points;
                 obstacle->Set_Scored(true);
                 cout << "Score: " << m_score << endl;
             }
@@ -272,6 +371,11 @@ void Game::Render_UI()
     SDL_Color textColor = { 50, 50, 50, 255 };
 
     render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
+
+    if (m_Player->HasExtraJump())
+        render_text(renderer, font_regular, "Extra Jump: " + to_string(m_Player->get_extra_jump_timer()), 20, 20);
+    if (m_Player->HasDoubleScore())
+        render_text(renderer, font_regular, "Double Score: " + to_string(m_Player->get_double_score_timer()), 20, 20);
 }
 
 void Game::Reset_Game()
@@ -307,13 +411,18 @@ void Game::Render_Playing()
         obstacle->Render(renderer, cameraX);
     }
 
+    for (const auto& powerUp : m_powerUps)
+    {
+        powerUp->Render(renderer, cameraX);
+    }
+
     Render_UI();
 }
 
 void Game::Update_Playing(float timeStep)
 {
     // --- 1. Update Game Objects ---
-    m_Player->Update(World_Id);
+    m_Player->Update(World_Id, timeStep);
 
     Update_Ground();
     Update_Spawning(timeStep);
@@ -346,8 +455,37 @@ void Game::Update_Playing(float timeStep)
             // Compare that distance to the player's radius squared
             if (distanceSq < (playerRadius * playerRadius))
             {
+                Audio_Manager::GetInstance().PlaySound("crash");
                 m_Player->SetIsDead(true);
-                break; // Stop checking once a collision is found
+                break;
+            }
+        }
+    }
+
+    // --- NEW: Player vs Power-up Collision Check ---
+    if (!m_Player->IsDead())
+    {
+        b2Vec2 playerCenter = m_Player->get_position();
+        float playerRadius = m_Player->Get_Radius_Meters();
+
+        // Use a safe iterator loop to handle removing collected power-ups
+        for (auto it = m_powerUps.begin(); it != m_powerUps.end(); /* no increment */)
+        {
+            PowerUp* powerUp = it->get();
+            b2Vec2 powerUpCenter = powerUp->get_position();
+            float powerUpRadius = 20.0f / PIXELS_PER_METER; // Assuming 20px radius
+
+            float distanceSq = b2DistanceSquared(playerCenter, powerUpCenter);
+
+            if (distanceSq < (playerRadius + powerUpRadius) * (playerRadius + powerUpRadius))
+            {
+                // Collision! Activate the power-up and remove it.
+                m_Player->ActivatePowerUp(powerUp->GetType());
+                it = m_powerUps.erase(it); // Erase and get next valid iterator
+            }
+            else
+            {
+                ++it; // No collision, just move to the next item
             }
         }
     }

@@ -27,6 +27,7 @@ private:
     unique_ptr<Player> m_Player;
     deque<unique_ptr<Scenery>> m_Ground_Segments;
     deque<unique_ptr<Obstacle>> m_Obstacles;
+    deque<unique_ptr<PowerUp>> m_powerUps;
 
     float m_Obstacle_Spawn_Timer = 0.0f;
 

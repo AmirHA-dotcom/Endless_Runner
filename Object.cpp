@@ -17,7 +17,6 @@ inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, flo
     return 0.0f;
 }
 
-
 // Player
 
 Player::Player(b2WorldId worldId)
@@ -52,7 +51,8 @@ Player::Player(b2WorldId worldId)
 
 bool Player::Can_Jump() const
 {
-    return m_jumps_Left > 0;
+    int maxJumps = (m_extraJumpTimer > 0) ? 3 : 2;
+    return m_jumps_Left > 0 && m_jumps_Left <= maxJumps;
 }
 
 void Player::Jump()
@@ -108,7 +108,7 @@ bool Player::Is_On_Ground(b2WorldId worldId)
     return hit;
 }
 
-void Player::Update(b2WorldId worldId)
+void Player::Update(b2WorldId worldId, float deltaTime)
 {
     b2Body_SetAngularVelocity(Body_Id, 0.0f);
     Move_Right();
@@ -122,6 +122,15 @@ void Player::Update(b2WorldId worldId)
         {
             m_jumps_Left = MAX_JUMPS;
         }
+    }
+
+    if (m_extraJumpTimer > 0)
+    {
+        m_extraJumpTimer -= deltaTime;
+    }
+    if (m_doubleScoreTimer > 0)
+    {
+        m_doubleScoreTimer -= deltaTime;
     }
 }
 
@@ -159,6 +168,18 @@ void Player::Reset()
     m_jumps_Left = MAX_JUMPS;
 }
 
+void Player::ActivatePowerUp(PowerUpType type)
+{
+    switch (type)
+    {
+        case PowerUpType::EXTRA_JUMP:
+            m_extraJumpTimer = 10.0f;
+            break;
+        case PowerUpType::DOUBLE_SCORE:
+            m_doubleScoreTimer = 10.0f;
+            break;
+    }
+}
 
 // Scenery
 
@@ -194,7 +215,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     b2Shape_SetFriction(ground_shape_ID, 0.7f);
 }
 
-void Scenery::Update(b2WorldId worldId)
+void Scenery::Update(b2WorldId worldId, float deltaTime)
 {
 
 }
@@ -231,30 +252,47 @@ float Scenery::Get_Right_EdgeX() const
 }
 
 // Obstacles
+
 Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float height)
 {
-    // Obstacle size
+    // Store the obstacle's size in pixels
     m_Width_Px = width;
     m_Height_Px = height;
 
+    // --- 1. Define the Body ---
     b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.type = b2_staticBody;
-
-    // Set its position based on the arguments
+    bodyDef.type = b2_staticBody; // Obstacles don't move
     bodyDef.position = { x / PIXELS_PER_METER, y / PIXELS_PER_METER };
+    bodyDef.userData = this; // Tag the body with a pointer to this object
 
-    // Tag the body with a pointer to this object
-    bodyDef.userData = this;
-
+    // Create the body in the world
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
-    // hitbox shape
+    // --- 2. Define the Shape and its Properties ---
+    // Define the hitbox geometry
     b2Polygon box = b2MakeBox(
             (m_Width_Px / 2.0f) / PIXELS_PER_METER,
             (m_Height_Px / 2.0f) / PIXELS_PER_METER
     );
+
+    // Define the collision filter for the obstacle
+    b2Filter filter;
+    filter.categoryBits = OBSTACLE_CATEGORY;
+    // Obstacles only need to physically collide with the player
+    filter.maskBits = PLAYER_CATEGORY;
+
+    // Define the shape's properties using the filter
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    b2CreatePolygonShape(Body_Id, &shapeDef, &box);
+    shapeDef.filter = filter;      // Apply the collision filter
+    shapeDef.isSensor = false;     // This makes the obstacle SOLID
+
+    // --- 3. Create the Shape in the World ---
+    // Create the shape and get its ID
+    b2ShapeId shape_ID = b2CreatePolygonShape(Body_Id, &shapeDef, &box);
+
+    // Set the final material properties
+    b2Shape_SetRestitution(shape_ID, 0.0f); // No bounce
+    b2Shape_SetFriction(shape_ID, 0.5f);
 }
 
 void Obstacle::Render(SDL_Renderer* renderer, float cameraX)
@@ -278,7 +316,7 @@ Obstacle::~Obstacle() noexcept
 
 }
 
-void Obstacle::Update(b2WorldId worldId)
+void Obstacle::Update(b2WorldId worldId, float deltaTime)
 {
 
 }
@@ -287,4 +325,37 @@ float Obstacle::Get_Right_EdgeX() const
 {
     b2Vec2 pos = b2Body_GetPosition(Body_Id);
     return (pos.x * PIXELS_PER_METER) + (m_Width_Px / 2.0f);
+}
+
+// Power Ups
+
+PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type(type)
+{
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_staticBody;
+    bodyDef.position = { x / PIXELS_PER_METER, y / PIXELS_PER_METER };
+    bodyDef.userData = this;
+    Body_Id = b2CreateBody(worldId, &bodyDef);
+
+    // All power-ups will be sensors
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.isSensor = true;
+
+    // ... set filter data if needed ...
+
+    b2Circle circle;
+    circle.radius = 20.0f / PIXELS_PER_METER; // All power-ups are 20px radius circles
+    b2CreateCircleShape(Body_Id, &shapeDef, &circle);
+}
+
+void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
+{
+    SDL_Color color;
+    switch (m_type)
+    {
+        case PowerUpType::EXTRA_JUMP:   color = {255, 255, 0, 255}; break;
+        case PowerUpType::DOUBLE_SCORE: color = {0, 255, 0, 255};   break;
+    }
+
+    // ... (logic to get position and draw a circle of the chosen color) ...
 }
