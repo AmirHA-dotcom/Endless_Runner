@@ -23,6 +23,11 @@ using namespace std;
 // Global Variables
 inline int SCREEN_WIDTH, SCREEN_HEIGHT;
 
+const uint16_t PLAYER_CATEGORY = 0x0001;
+const uint16_t GROUND_CATEGORY = 0x0002;
+const uint16_t OBSTACLE_CATEGORY = 0x0004;
+
+// Classes
 
 class Object
 {
@@ -32,7 +37,7 @@ protected:
 
 public:
     virtual ~Object() = default;
-    virtual void Update() = 0;
+    virtual void Update(b2WorldId worldId) = 0;
     virtual void Render(SDL_Renderer* renderer, float cameraX) = 0;
 };
 
@@ -40,11 +45,13 @@ class Player : public Object
 {
 private:
     bool is_Dead;
+    int m_jumps_Left;
+    int MAX_JUMPS = 2;
 public:
     explicit Player(b2WorldId WID);
     const float PLAYER_SPEED = 40.0f;
 
-    void Update() override;
+    void Update(b2WorldId worldId) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
 
     void Jump();
@@ -56,6 +63,9 @@ public:
     bool IsDead() const { return is_Dead; }
     void SetIsDead(bool isDead) { is_Dead = isDead; }
     float Get_Radius_Meters() const { return 25.0f / PIXELS_PER_METER; }
+
+    bool Is_On_Ground(b2WorldId worldId);
+    bool Can_Jump() const;
 };
 
 class Scenery : public Object
@@ -66,7 +76,7 @@ public:
     explicit Scenery(b2WorldId WID, float startX);
     ~Scenery();
 
-    void Update() override;
+    void Update(b2WorldId worldId) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
 };
@@ -81,7 +91,7 @@ public:
 
     ~Obstacle();
 
-    void Update() override;
+    void Update(b2WorldId worldId) override;
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }

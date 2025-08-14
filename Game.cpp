@@ -52,7 +52,7 @@ Game::Game()
 
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity = {0.0f, 20.0f};
+    worldDef.gravity = {0.0f, 40.0f};
     World_Id = b2CreateWorld(&worldDef);
 
     // Window size
@@ -78,6 +78,11 @@ void Game::Run()
     while (Running)
     {
         frameStart = SDL_GetTicks();
+
+        // Updating
+        m_Player->Update(World_Id);
+        Update_Ground();
+
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
@@ -95,7 +100,10 @@ void Game::Run()
                     }
                     case SDLK_SPACE:
                     {
-                        m_Player->Jump();
+                        if (m_Player->Can_Jump())
+                        {
+                            m_Player->Jump();
+                        }
                     }
                 }
             }
@@ -110,10 +118,6 @@ void Game::Run()
             cout << "Game Over!" << std::endl;
             Running = false;
         }
-
-        // Updating
-        m_Player->Update();
-        Update_Ground();
 
         // Collision
         if (!m_Player->IsDead())

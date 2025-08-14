@@ -4,27 +4,44 @@
 
 #include "Object.h"
 
+// helper
+
+inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context)
+{
+    // We found a shape, so we can report a hit.
+    bool* hit = (bool*)context;
+    *hit = true;
+
+    // Return 0.0f to terminate the raycast at the first hit.
+    // This is the most efficient way to handle it.
+    return 0.0f;
+}
+
 // Player
 
 Player::Player(b2WorldId worldId)
 {
     is_Dead = false;
+    m_jumps_Left = 2;
     const float PLAYER_RADIUS_PX = 25.0f;
 
-    // Define the body's properties
     b2BodyDef body_def = b2DefaultBodyDef();
     body_def.type = b2_dynamicBody;
     body_def.position = { 400.0f / PIXELS_PER_METER, 400.0f / PIXELS_PER_METER };
     body_def.userData = this;
 
-    // Create the body
     Body_Id = b2CreateBody(worldId, &body_def);
 
     b2Circle circle;
     circle.radius = PLAYER_RADIUS_PX / PIXELS_PER_METER;
 
+    b2Filter filter;
+    filter.categoryBits = PLAYER_CATEGORY;
+    filter.maskBits = GROUND_CATEGORY | OBSTACLE_CATEGORY;
+
     b2ShapeDef dynamic_shape_def = b2DefaultShapeDef();
     dynamic_shape_def.density = 1.0f;
+    dynamic_shape_def.filter = filter;
 
     b2ShapeId circle_shape_ID = b2CreateCircleShape(Body_Id, &dynamic_shape_def, &circle);
 
@@ -32,10 +49,24 @@ Player::Player(b2WorldId worldId)
     b2Shape_SetRestitution(circle_shape_ID, 0.0f);
 }
 
+bool Player::Can_Jump() const
+{
+    return m_jumps_Left > 0;
+}
+
 void Player::Jump()
 {
-    b2Vec2 impulse = { 0.0f, -40.0f };
-    b2Body_ApplyLinearImpulseToCenter(Body_Id, impulse, true);
+    if (!Can_Jump())
+    {
+        return;
+    }
+
+    b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
+    velocity.y = -15.0f;
+    b2Body_SetLinearVelocity(Body_Id, velocity);
+
+    // Use one jump
+    m_jumps_Left--;
 }
 
 void Player::Move_Right()
@@ -56,19 +87,36 @@ void Player::Move_Left()
     b2Body_SetLinearVelocity(Body_Id, current_velocity);
 }
 
-void Player::Update()
+bool Player::Is_On_Ground(b2WorldId worldId)
+{
+    b2Vec2 position = get_position();
+    float playerRadius = Get_Radius_Meters();
+
+    b2Vec2 startPoint = position;
+    b2Vec2 endPoint = {position.x, position.y + playerRadius + 0.1f};
+
+    b2QueryFilter filter = b2DefaultQueryFilter();
+
+    filter.maskBits = GROUND_CATEGORY;
+
+    bool hit = false;
+    void* context = &hit;
+
+    b2World_CastRay(worldId, startPoint, endPoint, filter, RaycastCallback, context);
+
+    return hit;
+}
+
+void Player::Update(b2WorldId worldId)
 {
     b2Body_SetAngularVelocity(Body_Id, 0.0f);
+    Move_Right();
 
-    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
-
-    if (keyboardState[SDL_SCANCODE_D])
+    // Check if the player is on the ground
+    if (Is_On_Ground(worldId))
     {
-        Move_Right();
-    }
-    else if (keyboardState[SDL_SCANCODE_A])
-    {
-        Move_Left();
+        // If so, reset the available jumps
+        m_jumps_Left = MAX_JUMPS;
     }
 }
 
@@ -109,7 +157,13 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     Body_Id = b2CreateBody(worldId, &groundBodyDef);
 
     b2Polygon groundBox = b2MakeBox(m_Width_Meters / 2.0f, (Ground_Height_Px / 2.0f) / PIXELS_PER_METER);
+
+    b2Filter filter;
+    filter.categoryBits = GROUND_CATEGORY;
+    filter.maskBits = PLAYER_CATEGORY;
+
     b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+    groundShapeDef.filter = filter;
 
     b2ShapeId ground_shape_ID = b2CreatePolygonShape(Body_Id, &groundShapeDef, &groundBox);
 
@@ -117,7 +171,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
     b2Shape_SetFriction(ground_shape_ID, 0.7f);
 }
 
-void Scenery::Update()
+void Scenery::Update(b2WorldId worldId)
 {
 
 }
@@ -201,7 +255,7 @@ Obstacle::~Obstacle() noexcept
 
 }
 
-void Obstacle::Update()
+void Obstacle::Update(b2WorldId worldId)
 {
 
 }
