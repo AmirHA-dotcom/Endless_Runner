@@ -115,8 +115,12 @@ void Player::Update(b2WorldId worldId)
     // Check if the player is on the ground
     if (Is_On_Ground(worldId))
     {
-        // If so, reset the available jumps
-        m_jumps_Left = MAX_JUMPS;
+        b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
+
+        if (velocity.y >= 0.0f)
+        {
+            m_jumps_Left = MAX_JUMPS;
+        }
     }
 }
 
