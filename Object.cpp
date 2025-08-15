@@ -21,6 +21,9 @@ inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, flo
 
 Player::Player(b2WorldId worldId)
 {
+    m_texture = Asset_Manager::GetInstance().GetTexture(m_currentSkin);
+    if (m_texture == nullptr) return;
+
     is_Dead = false;
     m_jumps_Left = 2;
     const float PLAYER_RADIUS_PX = 25.0f;
@@ -151,6 +154,8 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
 
 void Player::Render(SDL_Renderer* renderer, float cameraX)
 {
+    if (m_texture == nullptr) return;
+
     const float PLAYER_WIDTH_PX = 50.0f;
     const float PLAYER_HEIGHT_PX = 50.0f;
 
@@ -162,8 +167,10 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
             (int)PLAYER_HEIGHT_PX
     };
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-    SDL_RenderFillRect(renderer, &player_rect);
+    SDL_RenderCopy(renderer, m_texture, NULL, &player_rect);
+
+//    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+//    SDL_RenderFillRect(renderer, &player_rect);
 }
 
 float Player::Get_Radius_Meters() const

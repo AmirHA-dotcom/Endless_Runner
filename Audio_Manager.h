@@ -20,6 +20,7 @@
 #include <fstream>
 #include <algorithm>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_image.h>
 #include "map"
 
 using namespace std;

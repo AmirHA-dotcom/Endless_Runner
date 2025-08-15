@@ -58,6 +58,7 @@ public:
     void Save_Scores();
     void Load_Scores();
     void Update_High_Scores();
+    void Load_Assets();
 };
 
 

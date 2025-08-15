@@ -6,6 +6,7 @@
 #define ENDLESS_RUNNER_OBJECT_H
 
 #include "Audio_Manager.h"
+#include "Asset_Manager.h"
 
 // Global Variables
 
@@ -45,6 +46,9 @@ private:
     float PLAYER_SPEED = 20.0f;
     const float BASE_SPEED = 20.0f;
     const float MAX_SPEED = 100.0f;
+
+    SDL_Texture* m_texture;
+    string m_currentSkin = "player";;
 public:
     explicit Player(b2WorldId WID);
 

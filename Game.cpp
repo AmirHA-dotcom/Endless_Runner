@@ -90,6 +90,9 @@ Game::Game()
     // Window size
     SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
 
+    // Textures
+    Load_Assets();
+
     // Objects
     m_Player = make_unique<Player>(World_Id);
     Generate_Initial_Ground();
@@ -198,24 +201,23 @@ void Game::Update_Ground()
 
 void Game::Update_Spawning(float deltaTime)
 {
-    // Decrease the spawn timer by the time elapsed this frame
+    // Decrease the spawn time
     m_Obstacle_Spawn_Timer -= deltaTime;
 
-    // If the timer has run out, it's time to spawn something
     if (m_Obstacle_Spawn_Timer <= 0.0f)
     {
-        // --- 1. Spawn an Obstacle ---
+        // Spawn an Obstacle
         const float groundSurfaceY = SCREEN_HEIGHT - 40.0f; // 40px ground height
         float spawnX = cameraX + SCREEN_WIDTH + 100; // Spawn 100px off-screen to the right
 
         // Randomly choose which type of obstacle to create
-        int obstacleType = rand() % 3; // Random number between 0 and 2
+        int obstacleType = rand() % 3;
 
         switch (obstacleType)
         {
             case 0: // Short Obstacle (jump over)
             {
-                float width = 50.0f;
+                float width = 70.0f;
                 float height = 50.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
@@ -223,7 +225,7 @@ void Game::Update_Spawning(float deltaTime)
             }
             case 1: // Tall Obstacle (requires double jump)
             {
-                float width = 50.0f;
+                float width = 70.0f;
                 float height = 150.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
@@ -231,7 +233,7 @@ void Game::Update_Spawning(float deltaTime)
             }
             case 2: // Wide Obstacle (requires precise jump timing)
             {
-                float width = 150.0f;
+                float width = 250.0f;
                 float height = 25.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
@@ -239,7 +241,6 @@ void Game::Update_Spawning(float deltaTime)
             }
         }
 
-        // --- 2. Potentially Spawn a Power-Up ---
         // Only try to spawn a power-up if an obstacle was just created.
         if (!m_Obstacles.empty() && rand() % 4 == 0) // 25% chance
         {
@@ -251,12 +252,18 @@ void Game::Update_Spawning(float deltaTime)
             int posType = rand() % 3;
             b2Vec2 powerUpPos;
 
-            if (posType == 0) { // Before obstacle
-                powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y - 1.5f };
-            } else if (posType == 1) { // On top of obstacle
+            if (posType == 0)
+            { // Before obstacle
+                powerUpPos = { obstaclePos.x - obstacleWidth - 1.5f, obstaclePos.y - 1.5f };
+            }
+            else if (posType == 1)
+            { // On top of obstacle
                 powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
-            } else { // After obstacle
-                powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y - 1.5f };
+            }
+            else
+            {
+                // After obstacle
+                powerUpPos = { obstaclePos.x + obstacleWidth + 1.5f, obstaclePos.y - 1.5f };
             }
 
             // Randomly choose a power-up type
@@ -264,13 +271,11 @@ void Game::Update_Spawning(float deltaTime)
             m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
         }
 
-        // --- 3. Reset the Timer ---
         // Set the timer for the *next* obstacle to a new random duration.
         float baseMinDelay = 1.5f;
         float baseMaxDelay = 3.0f;
 
         // Calculate a difficulty reduction based on the score.
-        // For every 10 points, we'll reduce the delay by 0.05 seconds.
         float difficultyReduction = (m_score / 10) * 0.1f;
 
         // Calculate the new, shorter delays
@@ -632,4 +637,19 @@ void Game::Update_High_Scores()
     }
 
     Save_Scores();
+}
+
+// Textures
+
+void Game::Load_Assets()
+{
+    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+
 }

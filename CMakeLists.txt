@@ -14,6 +14,8 @@ add_executable(Endless_Runner main.cpp
         Object.h
         Audio_Manager.cpp
         Audio_Manager.h
+        Asset_Manager.cpp
+        Asset_Manager.h
 )
 
 target_include_directories(Endless_Runner PRIVATE "${SDL2_DEV_DIR}/include")
