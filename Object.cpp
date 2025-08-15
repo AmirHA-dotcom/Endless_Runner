@@ -188,6 +188,9 @@ void Player::Reset()
     b2Body_SetLinearVelocity(Body_Id, b2Vec2_zero);    // Stop all movement
     b2Body_SetAngularVelocity(Body_Id, 0.0f);          // Stop all rotation
 
+    m_extraJumpTimer = 0.0f;
+    m_doubleScoreTimer = 0.0f;
+
     m_jumps_Left = MAX_JUMPS;
 }
 
@@ -372,15 +375,31 @@ PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type
     b2Circle circle;
     circle.radius = 20.0f / PIXELS_PER_METER; // All power-ups are 20px radius circles
     b2CreateCircleShape(Body_Id, &shapeDef, &circle);
+
+    switch (m_type)
+    {
+        case PowerUpType::EXTRA_JUMP:
+            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp_extraJump");
+            break;
+        case PowerUpType::DOUBLE_SCORE:
+            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp_doubleScore");
+            break;
+    }
 }
 
 void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
 {
+    if (m_texture == nullptr) return;
+
     SDL_Color color;
     switch (m_type)
     {
-        case PowerUpType::EXTRA_JUMP:   color = {255, 255, 0, 255}; break;
-        case PowerUpType::DOUBLE_SCORE: color = {0, 255, 0, 255};   break;
+        case PowerUpType::EXTRA_JUMP:
+            color = {255, 255, 0, 255};
+            break;
+        case PowerUpType::DOUBLE_SCORE:
+            color = {0, 255, 0, 255};
+            break;
     }
 
     b2Vec2 position = b2Body_GetPosition(Body_Id);
@@ -388,16 +407,24 @@ void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
     int centerY = static_cast<int>(position.y * PIXELS_PER_METER);
     int radius = 20;
 
+    SDL_Rect rect;
+    rect.x = centerX - radius;
+    rect.y = centerY - radius;
+    rect.w = radius * 2;
+    rect.h = radius * 2;
+
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
-    for (int y = -radius; y <= radius; y++)
-    {
-        for (int x = -radius; x <= radius; x++)
-        {
-            if (x * x + y * y <= radius * radius)
-            {
-                SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
-            }
-        }
-    }
+//    for (int y = -radius; y <= radius; y++)
+//    {
+//        for (int x = -radius; x <= radius; x++)
+//        {
+//            if (x * x + y * y <= radius * radius)
+//            {
+//                SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
+//            }
+//        }
+//    }
+    SDL_RenderCopy(renderer, m_texture, NULL, &rect);
+
 }

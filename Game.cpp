@@ -270,8 +270,8 @@ void Game::Update_Spawning(float deltaTime)
             }
 
             // Randomly choose a power-up type
-            PowerUpType type = static_cast<PowerUpType>(rand() % 3);
-            m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
+            PowerUpType type = static_cast<PowerUpType>(rand() % 2);
+            m_powerUps.push_back(make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
         }
 
         // Timer for Next Obstacle
@@ -649,9 +649,9 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("obstacle_small", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerSad.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("obstacle_wide", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//slimeWalk1.png", renderer);
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_wide", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//worm.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("powerUp_extraJump", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Power Ups//frame-1.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("powerUp_doubleScore", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 
