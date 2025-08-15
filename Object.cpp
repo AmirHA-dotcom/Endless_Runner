@@ -21,6 +21,7 @@ inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, flo
 
 Player::Player(b2WorldId worldId)
 {
+    m_currentSkin = "player";
     m_texture = Asset_Manager::GetInstance().GetTexture(m_currentSkin);
     if (m_texture == nullptr) return;
 
@@ -274,8 +275,9 @@ float Scenery::Get_Right_EdgeX() const
 
 // Obstacles
 
-Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float height)
+Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float height, SDL_Texture* texture)
 {
+    m_texture = texture;
     // Store the obstacle's size in pixels
     m_Width_Px = width;
     m_Height_Px = height;
@@ -317,6 +319,8 @@ Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float heigh
 
 void Obstacle::Render(SDL_Renderer* renderer, float cameraX)
 {
+    if (m_texture == nullptr) return;
+
     const float visual_Y_Offset = 20.0f;
 
     b2Vec2 position = b2Body_GetPosition(Body_Id);
@@ -327,8 +331,10 @@ void Obstacle::Render(SDL_Renderer* renderer, float cameraX)
             (int)(m_Height_Px + visual_Y_Offset)
     };
 
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &rect);
+//    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+//    SDL_RenderFillRect(renderer, &rect);
+    SDL_RenderCopy(renderer, m_texture, NULL, &rect);
+
 }
 
 Obstacle::~Obstacle() noexcept

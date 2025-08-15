@@ -220,7 +220,8 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 70.0f;
                 float height = 50.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_small");
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
             case 1: // Tall Obstacle (requires double jump)
@@ -228,7 +229,8 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 70.0f;
                 float height = 150.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_tall");
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
             case 2: // Wide Obstacle (requires precise jump timing)
@@ -236,13 +238,14 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 250.0f;
                 float height = 25.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height));
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_wide");
+                m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
         }
 
-        // Only try to spawn a power-up if an obstacle was just created.
-        if (!m_Obstacles.empty() && rand() % 4 == 0) // 25% chance
+        // Power Ups
+        if (!m_Obstacles.empty() && rand() % 4 == 0)
         {
             Obstacle* lastObstacle = m_Obstacles.back().get();
             b2Vec2 obstaclePos = lastObstacle->get_position();
@@ -271,7 +274,7 @@ void Game::Update_Spawning(float deltaTime)
             m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
         }
 
-        // Set the timer for the *next* obstacle to a new random duration.
+        // Timer for Next Obstacle
         float baseMinDelay = 1.5f;
         float baseMaxDelay = 3.0f;
 
@@ -645,8 +648,8 @@ void Game::Load_Assets()
 {
     Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("obstacle_small", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_tall", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerSad.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_wide", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//slimeWalk1.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);

@@ -27,7 +27,8 @@ class Object
 protected:
     b2BodyId Body_Id;
     const float PIXELS_PER_METER = 30.0f;
-
+    SDL_Texture* m_texture;
+    string m_currentSkin = "player";
 public:
     virtual ~Object() = default;
     virtual void Update(b2WorldId worldId, float deltaTime, int score) = 0;
@@ -47,8 +48,6 @@ private:
     const float BASE_SPEED = 20.0f;
     const float MAX_SPEED = 100.0f;
 
-    SDL_Texture* m_texture;
-    string m_currentSkin = "player";;
 public:
     explicit Player(b2WorldId WID);
 
@@ -100,7 +99,7 @@ private:
 
     bool m_isScored = false;
 public:
-    explicit Obstacle(b2WorldId worldId, float x, float y, float width, float height);
+    explicit Obstacle(b2WorldId worldId, float x, float y, float width, float height, SDL_Texture* texture);
 
     ~Obstacle();
 
