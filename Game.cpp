@@ -81,6 +81,7 @@ Game::Game()
     }
 
     Load_Scores();
+    LoadWallet();
 
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
@@ -105,6 +106,8 @@ Game::Game()
     Audio_Manager::GetInstance().LoadSound("jump", "D://SOUND_EFFECTS//qubodup-cfork-ccby3-jump.ogg");
     Audio_Manager::GetInstance().LoadSound("crash", "D://SOUND_EFFECTS//zoom3.wav");
     Audio_Manager::GetInstance().LoadSound("UI_click", "D://SOUND_EFFECTS//UI//switch9.ogg");
+    Audio_Manager::GetInstance().LoadSound("collect_Coin", "D://SOUND_EFFECTS//retro-game-coin-pickup-jam-fx-1-00-03.mp3");
+    Audio_Manager::GetInstance().LoadSound("collect_PowerUp", "D://SOUND_EFFECTS//video-game-bonus-retro-sparkle-gamemaster-audio-lower-tone-1-00-00.mp3");
 }
 
 void Game::Run()
@@ -419,7 +422,7 @@ void Game::Render_UI()
     if (m_Player->HasDoubleScore())
         render_text(renderer, font_regular, "Double Score: " + to_string(m_Player->get_double_score_timer()), 20, 20);
 
-    render_text(renderer, font_regular, "Coins: " + to_string(Coin_Count), SCREEN_WIDTH - 100, 20);
+    render_text(renderer, font_regular, "Coins: " + to_string(current_coins), SCREEN_WIDTH - 100, 20);
 
 }
 
@@ -434,6 +437,8 @@ void Game::Reset_Game()
     m_Ground_Segments.clear();
     m_coins.clear();
     m_powerUps.clear();
+
+    current_coins = 0;
 
     Generate_Initial_Ground();
     cameraX = 0.0f;
@@ -545,6 +550,7 @@ void Game::Update_Playing(float timeStep)
 
             if (distanceSq < (playerRadius + powerUpRadius) * (playerRadius + powerUpRadius))
             {
+                Audio_Manager::GetInstance().PlaySound("collect_PowerUp");
                 // Collision! Activate the power-up and remove it.
                 m_Player->ActivatePowerUp(powerUp->GetType());
                 it = m_powerUps.erase(it); // Erase and get next valid iterator
@@ -573,7 +579,8 @@ void Game::Update_Playing(float timeStep)
 
             if (distanceSq < (playerRadius + coinUpRadius) * (playerRadius + coinUpRadius))
             {
-                Coin_Count++;
+                Audio_Manager::GetInstance().PlaySound("collect_Coin");
+                current_coins++;
                 it = m_coins.erase(it); // Erase and get next valid iterator
             }
             else
@@ -588,6 +595,8 @@ void Game::Update_Playing(float timeStep)
     {
         Audio_Manager::GetInstance().PlaySound("crash");
         Update_High_Scores();
+        m_totalCoins += current_coins;
+        SaveWallet();
         m_current_State = STATE::GAME_OVER;
     }
 
@@ -615,9 +624,6 @@ void Game::Render_GameOver()
 
 void Game::Render_MainMenu()
 {
-//    // Clear the screen to a background color
-//    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
-//    SDL_RenderClear(renderer);
     Render_Playing();
 
     // --- Draw Title ---
@@ -646,6 +652,10 @@ void Game::Render_MainMenu()
         render_text(renderer, font_regular, scoreText, 100, yPos);
         yPos += 40;
     }
+
+    // Draw Coins
+    render_text(renderer, font_regular, "Coins: " + to_string(m_totalCoins), SCREEN_WIDTH - 200, 250);
+
 }
 
 void Game::HandleEvents_Playing(const SDL_Event& event)
@@ -728,7 +738,7 @@ void Game::HandleEvents_GameOver(const SDL_Event& event)
     }
 }
 
-// Saving Scores
+// Saving
 
 void Game::Save_Scores()
 {
@@ -770,6 +780,26 @@ void Game::Update_High_Scores()
     }
 
     Save_Scores();
+}
+
+void Game::SaveWallet()
+{
+    std::ofstream walletFile("wallet.txt");
+    if (walletFile.is_open())
+    {
+        walletFile << m_totalCoins; // Write the single integer
+        walletFile.close();
+    }
+}
+
+void Game::LoadWallet()
+{
+    std::ifstream walletFile("wallet.txt");
+    if (walletFile.is_open())
+    {
+        walletFile >> m_totalCoins; // Read the single integer
+        walletFile.close();
+    }
 }
 
 // Textures

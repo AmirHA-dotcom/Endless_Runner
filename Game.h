@@ -32,7 +32,7 @@ private:
 
     float m_Obstacle_Spawn_Timer = 0.0f;
 
-    int m_score = 0;
+    long int m_score = 0;
 
     STATE m_current_State;
     vector<int> m_high_Scores;
@@ -43,7 +43,8 @@ private:
 
     std::vector<std::vector<SDL_Point>> m_starLayers;
 
-    int Coin_Count = 0;
+    long int current_coins = 0;
+    long int m_totalCoins = 0;
 public:
     Game();
     void Run();
@@ -69,6 +70,8 @@ public:
     void Load_Assets();
     void GenerateStars();
     void RenderStarfield();
+    void SaveWallet();
+    void LoadWallet();
 };
 
 
