@@ -6,7 +6,7 @@
 
 // helper
 
-inline void render_text(SDL_Renderer* renderer, TTF_Font* font, const string& text, int x, int y, SDL_Color color = {0, 0, 0, 255})
+inline void render_text(SDL_Renderer* renderer, TTF_Font* font, const string& text, int x, int y, SDL_Color color = { 200, 200, 200, 255 })
 {
     if (!font) return;
 
@@ -331,7 +331,7 @@ void Game::Update_Score()
 void Game::Render_UI()
 {
     string scoreText = "Score: " + to_string(m_score);
-    SDL_Color textColor = { 50, 50, 50, 255 };
+    SDL_Color textColor = { 200, 200, 200, 255 };
 
     render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
 
@@ -359,7 +359,7 @@ void Game::Reset_Game()
 
 void Game::Render_Playing()
 {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 10, 20, 40, 255);
     SDL_RenderClear(renderer);
 
     m_Player->Render(renderer, cameraX);
