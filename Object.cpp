@@ -525,11 +525,24 @@ PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type
     switch (m_type)
     {
         case PowerUpType::EXTRA_JUMP:
-            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp_extraJump");
+            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp");
             break;
         case PowerUpType::DOUBLE_SCORE:
-            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp_doubleScore");
+            m_texture = Asset_Manager::GetInstance().GetTexture("powerUp");
             break;
+    }
+
+    m_frameCount = 10; // Both sprite sheets have 10 main animation frames
+    m_animSpeed = 0.1f; // Adjust for desired rotation speed
+    m_currentFrame = 0;
+    m_animTimer = 0.0f;
+
+    if (m_texture)
+    {
+        int textureWidth, textureHeight;
+        SDL_QueryTexture(m_texture, NULL, NULL, &textureWidth, &textureHeight);
+        m_frameWidth = textureWidth / 10;
+        m_frameHeight = textureHeight;
     }
 }
 
@@ -537,40 +550,29 @@ void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
 {
     if (m_texture == nullptr) return;
 
-    SDL_Color color;
-    switch (m_type)
-    {
-        case PowerUpType::EXTRA_JUMP:
-            color = {255, 255, 0, 255};
-            break;
-        case PowerUpType::DOUBLE_SCORE:
-            color = {0, 255, 0, 255};
-            break;
-    }
+    // Source rect on the sprite sheet
+    SDL_Rect srcRect = { m_currentFrame * m_frameWidth, 0, m_frameWidth, m_frameHeight };
 
+    // Destination rect on the screen
     b2Vec2 position = b2Body_GetPosition(Body_Id);
-    int centerX = static_cast<int>((position.x * PIXELS_PER_METER) - cameraX);
-    int centerY = static_cast<int>(position.y * PIXELS_PER_METER);
-    int radius = 20;
+    int radius = 20; // Visual radius in pixels
+    SDL_Rect destRect = {
+            static_cast<int>((position.x * PIXELS_PER_METER) - radius - cameraX),
+            static_cast<int>((position.y * PIXELS_PER_METER) - radius),
+            radius * 2,
+            radius * 2
+    };
 
-    SDL_Rect rect;
-    rect.x = centerX - radius;
-    rect.y = centerY - radius;
-    rect.w = radius * 2;
-    rect.h = radius * 2;
+    SDL_RenderCopy(renderer, m_texture, &srcRect, &destRect);
+}
 
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-
-//    for (int y = -radius; y <= radius; y++)
-//    {
-//        for (int x = -radius; x <= radius; x++)
-//        {
-//            if (x * x + y * y <= radius * radius)
-//            {
-//                SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
-//            }
-//        }
-//    }
-    SDL_RenderCopy(renderer, m_texture, NULL, &rect);
-
+void PowerUp::Update(b2WorldId worldId, float deltaTime, int score)
+{
+    // This animation timer logic is the same as the Player's
+    m_animTimer += deltaTime;
+    if (m_animTimer >= m_animSpeed)
+    {
+        m_currentFrame = (m_currentFrame + 1) % m_frameCount;
+        m_animTimer -= m_animSpeed;
+    }
 }

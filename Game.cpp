@@ -434,6 +434,11 @@ void Game::Update_Playing(float timeStep)
     Update_Spawning(timeStep);
     Update_Score();
 
+    for (const auto& powerUp : m_powerUps)
+    {
+        powerUp->Update(World_Id, timeStep, m_score);
+    }
+
     // Step the Physics World
     b2World_Step(World_Id, timeStep, 3);
 
@@ -711,8 +716,10 @@ void Game::Load_Assets()
     wide_obstacle_skins = { "obstacle_wide" };
 
     // Power Ups
-    Asset_Manager::GetInstance().LoadTexture("powerUp_extraJump", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Power Ups//frame-1.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("powerUp_doubleScore", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("powerUp", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet _powerUp.png", renderer);
+
+    // Coins
+    Asset_Manager::GetInstance().LoadTexture("Coin", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
 
     // Ground
     Asset_Manager::GetInstance().LoadTexture("Ground_Sand", "D://Textures//kenney_platformer-art-deluxe//Base pack//Tiles//sandCenter.png", renderer);

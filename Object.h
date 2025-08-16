@@ -133,10 +133,17 @@ class PowerUp : public Object
 {
 private:
     PowerUpType m_type;
+
+    int m_frameCount;
+    int m_currentFrame;
+    int m_frameWidth;
+    int m_frameHeight;
+    float m_animTimer;
+    float m_animSpeed;
 public:
     explicit PowerUp(b2WorldId worldId, PowerUpType type, float x, float y);
     void Render(SDL_Renderer* renderer, float cameraX) override;
-    void Update(b2WorldId worldId, float deltaTime, int score) override {}
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
 
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
 
