@@ -33,6 +33,25 @@ Player::Player(b2WorldId worldId)
     m_texture = Asset_Manager::GetInstance().GetTexture(m_currentSkin);
     if (m_texture == nullptr) return;
 
+    // Set animation properties
+    m_frameCount = 2; // The Kenney sprite sheet you showed has 11 frames of walking
+    m_currentFrame = 0;
+    m_animTimer = 0.0f;
+    m_animSpeed = 0.08f; // Display each frame for 0.08 seconds (~12 FPS animation)
+
+    if (m_texture)
+    {
+        // Query the texture to get its total width and height
+        int textureWidth, textureHeight;
+        SDL_QueryTexture(m_texture, NULL, NULL, &textureWidth, &textureHeight);
+
+        // Calculate the width of a single frame
+//        m_frameWidth = textureWidth / m_frameCount;
+//        m_frameHeight = textureHeight; // Since all frames are in one row
+        m_frameWidth = 69;
+        m_frameHeight = 94;
+    }
+
     is_Dead = false;
     m_jumps_Left = 2;
     const float PLAYER_RADIUS_PX = 25.0f;
@@ -159,11 +178,35 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
     {
         m_doubleScoreTimer -= deltaTime;
     }
+
+    m_animTimer += deltaTime;
+    if (m_animTimer >= m_animSpeed)
+    {
+        // Move to the next frame
+        m_currentFrame++;
+
+        // If we've passed the last frame, loop back to the first
+        if (m_currentFrame >= m_frameCount)
+        {
+            m_currentFrame = 0;
+        }
+
+        // Reset the timer for the next frame
+        m_animTimer -= m_animSpeed;
+    }
 }
 
 void Player::Render(SDL_Renderer* renderer, float cameraX)
 {
     if (m_texture == nullptr) return;
+
+    SDL_Rect srcRect;
+    srcRect.x = m_currentFrame * m_frameWidth; // Calculate X position on the sprite sheet
+//    srcRect.y = 0;                             // Top of the sheet
+    srcRect.y = 3 * m_frameHeight + 4;
+    srcRect.w = m_frameWidth;                  // Width of a single frame
+    srcRect.h = m_frameHeight;                 // Height of a single frame
+
 
     const float PLAYER_WIDTH_PX = 50.0f;
     const float PLAYER_HEIGHT_PX = 50.0f;
@@ -176,7 +219,9 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
             (int)PLAYER_HEIGHT_PX
     };
 
-    SDL_RenderCopy(renderer, m_texture, NULL, &player_rect);
+    //SDL_RenderCopy(renderer, m_texture, NULL, &player_rect);
+    SDL_RenderCopy(renderer, m_texture, &srcRect, &player_rect);
+
 
 //    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
 //    SDL_RenderFillRect(renderer, &player_rect);

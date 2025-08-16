@@ -691,7 +691,8 @@ void Game::Update_High_Scores()
 void Game::Load_Assets()
 {
     // Player
-    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienGreen.png", renderer);
 
     // Small Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster_Angry", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);

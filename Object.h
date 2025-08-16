@@ -48,6 +48,14 @@ private:
     const float BASE_SPEED = 20.0f;
     const float MAX_SPEED = 100.0f;
 
+    // Animations
+    int m_frameCount;      // Total number of frames in the animation
+    int m_currentFrame;    // The current frame to draw (e.g., 0, 1, 2...)
+    int m_frameWidth;      // The width of a single frame in the sprite sheet
+    int m_frameHeight;     // The height of a single frame
+    float m_animTimer;       // Timer to control animation speed
+    float m_animSpeed;       // How long each frame is displayed (in seconds)
+
 public:
     explicit Player(b2WorldId WID);
 
