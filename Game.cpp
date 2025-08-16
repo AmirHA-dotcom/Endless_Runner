@@ -660,7 +660,7 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall_OrangeMonster_Sad", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerSad.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall_GreenMonster_Poker", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//snakeSlime.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall_OrangeMonster_Angry", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerMad.png", renderer);
-    tall_obstacle_skins = { "obstacle_tall_OrangeMonster_Sad", "obstacle_tall_GreenMonster_Poker", "" };
+    tall_obstacle_skins = { "obstacle_tall_OrangeMonster_Sad", "obstacle_tall_GreenMonster_Poker", "obstacle_tall_OrangeMonster_Angry" };
 
     // Wide Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_wide", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//worm.png", renderer);

@@ -232,6 +232,7 @@ Scenery::Scenery(b2WorldId worldId, float startX)
 
     groundBodyDef.userData = this;
 
+    std::cout << "Creating Scenery at: " << groundBodyDef.position.x << ", " << groundBodyDef.position.y << std::endl;
     Body_Id = b2CreateBody(worldId, &groundBodyDef);
 
     b2Filter filter;
@@ -300,6 +301,8 @@ Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float heigh
     bodyDef.userData = this; // Tag the body with a pointer to this object
 
     // Create the body in the world
+    std::cout << "Creating Obstacle at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
+
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
     // --- 2. Define the Shape and its Properties ---
@@ -372,6 +375,9 @@ PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type
     bodyDef.type = b2_staticBody;
     bodyDef.position = { x, y };
     bodyDef.userData = this;
+
+    std::cout << "Creating PowerUp at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
+
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
     // All power-ups will be sensors
