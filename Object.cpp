@@ -6,15 +6,39 @@
 
 // helper
 
+#include "Object.h" // Make sure this is included
+
 inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* context)
 {
-    // We found a shape, so we can report a hit.
+    b2BodyId bodyId = b2Shape_GetBody(shapeId);
+    // Get the game object pointer from the body's user data
+    Object* hitObject = static_cast<Object*>(b2Body_GetUserData(bodyId));
+
+//    if (hitObject != nullptr)
+//    {
+//        // Use dynamic_cast to check the actual type of the object
+//        if (dynamic_cast<Player*>(hitObject))
+//        {
+//            std::cout << "Raycast Hit: Player" << std::endl;
+//        }
+//        else if (dynamic_cast<Scenery*>(hitObject))
+//        {
+//            std::cout << "Raycast Hit: Scenery" << std::endl;
+//        }
+//        else if (dynamic_cast<Obstacle*>(hitObject))
+//        {
+//            std::cout << "Raycast Hit: Obstacle" << std::endl;
+//        }
+//        else
+//        {
+//            std::cout << "Raycast Hit: Unknown Object" << std::endl;
+//        }
+//    }
+
     bool* hit = (bool*)context;
     *hit = true;
 
-    // Return 0.0f to terminate the raycast at the first hit.
-    // This is the most efficient way to handle it.
-    return 0.0f;
+    return 0.0f; // Terminate the raycast
 }
 
 Object::~Object()
@@ -128,7 +152,7 @@ bool Player::Is_On_Ground(b2WorldId worldId)
 
     b2QueryFilter filter = b2DefaultQueryFilter();
 
-    filter.maskBits = GROUND_CATEGORY;
+    filter.maskBits = GROUND_CATEGORY | OBSTACLE_CATEGORY;
 
     bool hit = false;
     void* context = &hit;
@@ -154,6 +178,8 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
     // Check if the player is on the ground
     if (Is_On_Ground(worldId))
     {
+        SetAnimation(AnimationState::RUNNING);
+
         b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
 
         if (velocity.y >= 0.0f)
@@ -168,6 +194,39 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
             }
         }
     }
+    else // The player is in the air
+    {
+        b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
+        std::cout << "In Air, Y-Velocity: " << velocity.y << std::endl;
+
+        if (velocity.y < -0.1f) // Moving upwards (jumping)
+        {
+            SetAnimation(AnimationState::JUMPING);
+        }
+        else if (velocity.y > 0.1f) // Moving downwards (falling)
+        {
+            SetAnimation(AnimationState::FALLING);
+        }
+    }
+
+    if (m_animState == AnimationState::RUNNING)
+    {
+        m_animTimer += deltaTime;
+        if (m_animTimer >= m_animSpeed)
+        {
+            // Move to the next frame
+            m_currentFrame++;
+
+            // If we've passed the last frame, loop back to the first
+            if (m_currentFrame >= m_frameCount)
+            {
+                m_currentFrame = 0;
+            }
+
+            // Reset the timer for the next frame
+            m_animTimer -= m_animSpeed;
+        }
+    }
 
     if (m_extraJumpTimer > 0)
     {
@@ -178,22 +237,6 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
     {
         m_doubleScoreTimer -= deltaTime;
     }
-
-    m_animTimer += deltaTime;
-    if (m_animTimer >= m_animSpeed)
-    {
-        // Move to the next frame
-        m_currentFrame++;
-
-        // If we've passed the last frame, loop back to the first
-        if (m_currentFrame >= m_frameCount)
-        {
-            m_currentFrame = 0;
-        }
-
-        // Reset the timer for the next frame
-        m_animTimer -= m_animSpeed;
-    }
 }
 
 void Player::Render(SDL_Renderer* renderer, float cameraX)
@@ -203,7 +246,7 @@ void Player::Render(SDL_Renderer* renderer, float cameraX)
     SDL_Rect srcRect;
     srcRect.x = m_currentFrame * m_frameWidth; // Calculate X position on the sprite sheet
 //    srcRect.y = 0;                             // Top of the sheet
-    srcRect.y = 3 * m_frameHeight + 4;
+    srcRect.y = m_animRow * m_frameHeight + 4;
     srcRect.w = m_frameWidth;                  // Width of a single frame
     srcRect.h = m_frameHeight;                 // Height of a single frame
 
@@ -260,6 +303,34 @@ void Player::ActivatePowerUp(PowerUpType type)
     }
 }
 
+void Player::SetAnimation(AnimationState state)
+{
+    // Don't restart the animation if we are already in the same state
+    if (state == m_animState) return;
+
+    m_animState = state;
+
+    switch (m_animState)
+    {
+        case AnimationState::RUNNING:
+            m_animRow = 2;      // 3rd row
+            m_frameCount = 2;   // 2 frames
+            m_animSpeed = 0.2f;
+            break;
+        case AnimationState::JUMPING:
+            m_animRow = 3;      // 4th row
+            m_currentFrame = 1; // 2nd frame on that row
+            m_frameCount = 1;   // It's a single static frame
+            cout << "JUMPED" << endl;
+            break;
+        case AnimationState::FALLING:
+            m_animRow = 3;      // 4th row
+            m_currentFrame = 0; // 1st frame on that row
+            m_frameCount = 1;   // Also a single static frame
+            break;
+    }
+}
+
 // Scenery
 
 Scenery::Scenery(b2WorldId worldId, float startX, SDL_Texture* texture)
@@ -279,7 +350,7 @@ Scenery::Scenery(b2WorldId worldId, float startX, SDL_Texture* texture)
 
     groundBodyDef.userData = this;
 
-    std::cout << "Creating Scenery at: " << groundBodyDef.position.x << ", " << groundBodyDef.position.y << std::endl;
+    //std::cout << "Creating Scenery at: " << groundBodyDef.position.x << ", " << groundBodyDef.position.y << std::endl;
     Body_Id = b2CreateBody(worldId, &groundBodyDef);
 
     b2Filter filter;
@@ -362,7 +433,7 @@ Obstacle::Obstacle(b2WorldId worldId, float x, float y, float width, float heigh
     bodyDef.userData = this; // Tag the body with a pointer to this object
 
     // Create the body in the world
-    std::cout << "Creating Obstacle at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
+    //std::cout << "Creating Obstacle at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
 
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
@@ -437,7 +508,7 @@ PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type
     bodyDef.position = { x, y };
     bodyDef.userData = this;
 
-    std::cout << "Creating PowerUp at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
+    //std::cout << "Creating PowerUp at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
 
     Body_Id = b2CreateBody(worldId, &bodyDef);
 
