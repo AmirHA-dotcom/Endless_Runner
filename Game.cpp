@@ -220,7 +220,13 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 70.0f;
                 float height = 50.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_small");
+//                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_small");
+                const auto& skins = small_obstacle_skins;
+                if (skins.empty()) break;
+
+                int skinIndex = rand() % skins.size();
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture(skins[skinIndex]);
+
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
@@ -229,7 +235,11 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 70.0f;
                 float height = 150.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_tall");
+                const auto& skins = tall_obstacle_skins;
+                if (skins.empty()) break;
+
+                int skinIndex = rand() % skins.size();
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture(skins[skinIndex]);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
@@ -238,7 +248,11 @@ void Game::Update_Spawning(float deltaTime)
                 float width = 250.0f;
                 float height = 25.0f;
                 float spawnY = groundSurfaceY - (height / 2.0f);
-                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("obstacle_wide");
+                const auto& skins = wide_obstacle_skins;
+                if (skins.empty()) break;
+
+                int skinIndex = rand() % skins.size();
+                SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture(skins[skinIndex]);
                 m_Obstacles.push_back(std::make_unique<Obstacle>(World_Id, spawnX, spawnY, width, height, tex));
                 break;
             }
@@ -257,7 +271,7 @@ void Game::Update_Spawning(float deltaTime)
 
             if (posType == 0)
             { // Before obstacle
-                powerUpPos = { obstaclePos.x - obstacleWidth - 1.5f, obstaclePos.y - 1.5f };
+                powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y};
             }
             else if (posType == 1)
             { // On top of obstacle
@@ -266,12 +280,12 @@ void Game::Update_Spawning(float deltaTime)
             else
             {
                 // After obstacle
-                powerUpPos = { obstaclePos.x + obstacleWidth + 1.5f, obstaclePos.y - 1.5f };
+                powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y };
             }
 
             // Randomly choose a power-up type
             PowerUpType type = static_cast<PowerUpType>(rand() % 2);
-            m_powerUps.push_back(make_unique<PowerUp>(World_Id, type, powerUpPos.x * PIXELS_PER_METER, powerUpPos.y * PIXELS_PER_METER));
+            m_powerUps.push_back(make_unique<PowerUp>(World_Id, type, powerUpPos.x, powerUpPos.y));
         }
 
         // Timer for Next Obstacle
@@ -646,12 +660,27 @@ void Game::Update_High_Scores()
 
 void Game::Load_Assets()
 {
+    // Player
     Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("obstacle_small", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
+
+    // Small Obstacles
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small_Spider", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//barnacle.png", renderer);
+    small_obstacle_skins = { "obstacle_small_GreenMonster", "obstacle_small_Spider" };
+
+    // Tall Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerSad.png", renderer);
+    tall_obstacle_skins = { "obstacle_tall" };
+
+    // Wide Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_wide", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//worm.png", renderer);
+    wide_obstacle_skins = { "obstacle_wide" };
+
+    // Power Ups
     Asset_Manager::GetInstance().LoadTexture("powerUp_extraJump", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Power Ups//frame-1.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("powerUp_doubleScore", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
+
+
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 

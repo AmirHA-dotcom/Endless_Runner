@@ -17,6 +17,14 @@ inline float RaycastCallback(b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, flo
     return 0.0f;
 }
 
+Object::~Object()
+{
+    if (B2_IS_NON_NULL(Body_Id))
+    {
+        b2DestroyBody(Body_Id);
+    }
+}
+
 // Player
 
 Player::Player(b2WorldId worldId)
@@ -264,10 +272,10 @@ void Scenery::Render(SDL_Renderer* renderer, float cameraX)
 
 Scenery::~Scenery()
 {
-    if (b2Body_IsValid(Body_Id))
-    {
-        b2DestroyBody(Body_Id);
-    }
+//    if (b2Body_IsValid(Body_Id))
+//    {
+//        b2DestroyBody(Body_Id);
+//    }
 }
 
 float Scenery::Get_Right_EdgeX() const
@@ -362,7 +370,7 @@ PowerUp::PowerUp(b2WorldId worldId, PowerUpType type, float x, float y) : m_type
 {
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.type = b2_staticBody;
-    bodyDef.position = { x / PIXELS_PER_METER, y / PIXELS_PER_METER };
+    bodyDef.position = { x, y };
     bodyDef.userData = this;
     Body_Id = b2CreateBody(worldId, &bodyDef);
 

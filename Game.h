@@ -36,6 +36,11 @@ private:
     STATE m_current_State;
     vector<int> m_high_Scores;
 
+    vector<string> small_obstacle_skins;
+    vector<string> tall_obstacle_skins;
+    vector<string> wide_obstacle_skins;
+
+
 public:
     Game();
     void Run();

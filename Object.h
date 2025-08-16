@@ -25,12 +25,12 @@ enum class PowerUpType { EXTRA_JUMP, DOUBLE_SCORE };
 class Object
 {
 protected:
-    b2BodyId Body_Id;
+    b2BodyId Body_Id  = b2_nullBodyId;
     const float PIXELS_PER_METER = 30.0f;
     SDL_Texture* m_texture;
-    string m_currentSkin = "player";
+    string m_currentSkin = "";
 public:
-    virtual ~Object() = default;
+    virtual ~Object();
     virtual void Update(b2WorldId worldId, float deltaTime, int score) = 0;
     virtual void Render(SDL_Renderer* renderer, float cameraX) = 0;
 };
