@@ -93,6 +93,9 @@ Game::Game()
     // Textures
     Load_Assets();
 
+    // BackGround
+    GenerateStars();
+
     // Objects
     m_Player = make_unique<Player>(World_Id);
     Generate_Initial_Ground();
@@ -362,6 +365,8 @@ void Game::Render_Playing()
     SDL_SetRenderDrawColor(renderer, 10, 20, 40, 255);
     SDL_RenderClear(renderer);
 
+    RenderStarfield();
+
     m_Player->Render(renderer, cameraX);
 
     for (const auto& segment : m_Ground_Segments)
@@ -384,17 +389,17 @@ void Game::Render_Playing()
 
 void Game::Update_Playing(float timeStep)
 {
-    // --- 1. Update Game Objects ---
+    // Update Game Objects
     m_Player->Update(World_Id, timeStep, m_score);
 
     Update_Ground();
     Update_Spawning(timeStep);
     Update_Score();
 
-    // --- 2. Step the Physics World ---
+    // Step the Physics World
     b2World_Step(World_Id, timeStep, 3);
 
-    // --- 3. Check for Collisions ---
+    // Check for Collisions
     if (!m_Player->IsDead())
     {
         b2Vec2 playerCenter = m_Player->get_position();
@@ -426,7 +431,7 @@ void Game::Update_Playing(float timeStep)
         }
     }
 
-    // --- Player vs Power-up Collision Check ---
+    // Player vs Power-up Collision Check
     if (!m_Player->IsDead())
     {
         b2Vec2 playerCenter = m_Player->get_position();
@@ -454,7 +459,7 @@ void Game::Update_Playing(float timeStep)
         }
     }
 
-    // --- 4. Check for State Change ---
+    // Check for State Change
     if (m_Player->IsDead())
     {
         Audio_Manager::GetInstance().PlaySound("crash");
@@ -462,7 +467,7 @@ void Game::Update_Playing(float timeStep)
         m_current_State = STATE::GAME_OVER;
     }
 
-    // --- 5. Update the Camera ---
+    // Update the Camera
     b2Vec2 playerPosMeters = m_Player->get_position();
     float playerPosPixelsX = playerPosMeters.x * PIXELS_PER_METER;
     cameraX = playerPosPixelsX - (SCREEN_WIDTH / 2.0f);
@@ -674,4 +679,60 @@ void Game::Load_Assets()
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
 
+}
+
+// BackGround
+
+void Game::GenerateStars()
+{
+    const int NUM_LAYERS = 3;
+    const int STARS_PER_LAYER[] = {50, 100, 150}; // Far, middle, near layers
+
+    m_starLayers.resize(NUM_LAYERS);
+
+    for (int i = 0; i < NUM_LAYERS; ++i)
+    {
+        for (int j = 0; j < STARS_PER_LAYER[i]; ++j)
+        {
+            // Create stars across two screen widths to help with wrapping
+            int x = rand() % (SCREEN_WIDTH * 2);
+            int y = rand() % SCREEN_HEIGHT;
+            m_starLayers[i].push_back({x, y});
+        }
+    }
+}
+
+void Game::RenderStarfield()
+{
+    const float LAYER_SPEEDS[] = {0.15f, 0.25f, 0.50f};
+
+    const SDL_Color LAYER_COLORS[] = {
+            {100, 100, 100, 255}, // Far stars
+            {170, 170, 170, 255}, // Middle stars
+            {255, 255, 255, 255}  // Near stars
+    };
+
+    for (int i = 0; i < m_starLayers.size(); ++i)
+    {
+        SDL_SetRenderDrawColor(renderer, LAYER_COLORS[i].r, LAYER_COLORS[i].g, LAYER_COLORS[i].b, LAYER_COLORS[i].a);
+
+        // Calculate how much this layer should scroll based on the camera
+        int parallaxX = static_cast<int>(cameraX * LAYER_SPEEDS[i]);
+
+        for (const auto& star : m_starLayers[i])
+        {
+            int screenX = star.x - parallaxX;
+            int screenY = star.y;
+
+            // If the star scrolls off the left, wrap it to the right
+            while (screenX < 0)
+            {
+                screenX += SCREEN_WIDTH * 2;
+            }
+            // Use modulo to keep the star within two screen widths
+            screenX %= (SCREEN_WIDTH * 2);
+
+            SDL_RenderDrawPoint(renderer, screenX, screenY);
+        }
+    }
 }

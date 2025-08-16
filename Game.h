@@ -40,7 +40,7 @@ private:
     vector<string> tall_obstacle_skins;
     vector<string> wide_obstacle_skins;
 
-
+    std::vector<std::vector<SDL_Point>> m_starLayers;
 public:
     Game();
     void Run();
@@ -64,6 +64,8 @@ public:
     void Load_Scores();
     void Update_High_Scores();
     void Load_Assets();
+    void GenerateStars();
+    void RenderStarfield();
 };
 
 
