@@ -263,55 +263,42 @@ void Game::Update_Spawning(float deltaTime)
         {
             Obstacle* lastObstacle = m_Obstacles.back().get();
             b2Vec2 obstaclePos = lastObstacle->get_position();
-            float obstacleWidth = lastObstacle->GetWidthMeters();
+            // LOGIC FIX: Use half width for more accurate placement
+            float obstacleHalfWidth = lastObstacle->GetWidthMeters() / 2.0f;
 
-            // Randomly choose a position relative to the obstacle
             int posType = rand() % 3;
             b2Vec2 powerUpPos;
 
-            if (posType == 0)
-            { // Before obstacle
-                powerUpPos = { obstaclePos.x - obstacleWidth, obstaclePos.y};
-            }
-            else if (posType == 1)
-            { // On top of obstacle
+            if (posType == 0) { // Before obstacle
+                powerUpPos = { obstaclePos.x - obstacleHalfWidth - 1.5f, obstaclePos.y - 1.5f };
+            } else if (posType == 1) { // On top of obstacle
                 powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
-            }
-            else
-            {
-                // After obstacle
-                powerUpPos = { obstaclePos.x + obstacleWidth, obstaclePos.y };
+            } else { // After obstacle
+                powerUpPos = { obstaclePos.x + obstacleHalfWidth + 1.5f, obstaclePos.y - 1.5f };
             }
 
-            // Randomly choose a power-up type
             PowerUpType type = static_cast<PowerUpType>(rand() % 2);
-            m_powerUps.push_back(make_unique<PowerUp>(World_Id, type, powerUpPos.x, powerUpPos.y));
+            m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x, powerUpPos.y));
         }
 
-        // Timer for Next Obstacle
+        // --- Timer for Next Obstacle (with crash fix) ---
         float baseMinDelay = 1.5f;
         float baseMaxDelay = 3.0f;
-
-        // Calculate a difficulty reduction based on the score.
         float difficultyReduction = (m_score / 10) * 0.1f;
-
-        // Calculate the new, shorter delays
         float currentMinDelay = baseMinDelay - difficultyReduction;
         float currentMaxDelay = baseMaxDelay - difficultyReduction;
 
-        // Clamp the values to a maximum difficulty to keep the game playable
         const float absoluteMinDelay = 0.8f;
         const float absoluteMaxDelay = 1.5f;
-
         if (currentMinDelay < absoluteMinDelay) currentMinDelay = absoluteMinDelay;
         if (currentMaxDelay < absoluteMaxDelay) currentMaxDelay = absoluteMaxDelay;
-
-        // Ensure max is always greater than or equal to min
         if (currentMaxDelay < currentMinDelay) currentMaxDelay = currentMinDelay;
 
-        // Set the timer to a new random duration within the new, harder range
+        // Use a safer, more standard formula for random float generation.
         float delayRange = currentMaxDelay - currentMinDelay;
-        float randomTime = currentMinDelay + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / delayRange));
+        float randomFraction = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        float randomTime = currentMinDelay + (randomFraction * delayRange);
+
         m_Obstacle_Spawn_Timer = randomTime;
     }
 }
@@ -664,9 +651,10 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
 
     // Small Obstacles
-    Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("obstacle_small_Spider", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//barnacle.png", renderer);
-    small_obstacle_skins = { "obstacle_small_GreenMonster", "obstacle_small_Spider" };
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster_Angry", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small_Creature", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//barnacle.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster_Poker","D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Enemy sprites//slimeBlock.png", renderer);
+    small_obstacle_skins = { "obstacle_small_GreenMonster_Angry", "obstacle_small_Creature", "obstacle_small_GreenMonster_Poker" };
 
     // Tall Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_tall", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//pokerSad.png", renderer);
