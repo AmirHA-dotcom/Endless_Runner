@@ -268,26 +268,61 @@ void Game::Update_Spawning(float deltaTime)
         if (!m_Obstacles.empty() && rand() % 4 == 0)
         {
             Obstacle* lastObstacle = m_Obstacles.back().get();
-            b2Vec2 obstaclePos = lastObstacle->get_position();
-            // LOGIC FIX: Use half width for more accurate placement
-            float obstacleHalfWidth = lastObstacle->GetWidthMeters() / 2.0f;
+            b2Vec2 obstaclePos = lastObstacle->get_position(); // meters
+            float obstacleHalfWidth = lastObstacle->GetWidthMeters() / 2.0f; // meters
+            float obstacleHalfHeight = lastObstacle->GetHeightMeters() / 2.0f; // meters
+
+            // Power-up physical radius (meters) — keep consistent with PowerUp ctor
+            const float powerUpRadius = 20.0f / PIXELS_PER_METER;
+            const float safeMargin = 0.05f; // small margin in meters
 
             int posType = rand() % 3;
             b2Vec2 powerUpPos;
 
-            if (posType == 0) { // Before obstacle
-                powerUpPos = { obstaclePos.x - obstacleHalfWidth - 1.5f, obstaclePos.y - 1.5f };
-            } else if (posType == 1) { // On top of obstacle
-                powerUpPos = { obstaclePos.x, obstaclePos.y - 3.0f };
-            } else { // After obstacle
-                powerUpPos = { obstaclePos.x + obstacleHalfWidth + 1.5f, obstaclePos.y - 1.5f };
+            // Compute using obstacle top surface and width (assuming obstaclePos.y is center and
+            // smaller y = up / larger y = down as you already used obstaclePos.y - ... in code)
+            float obstacleTopY = obstaclePos.y - obstacleHalfHeight;
+            float obstacleCenterY = obstaclePos.y;
+
+            if (posType == 0) { // Before obstacle (left)
+                powerUpPos.x = obstaclePos.x - obstacleHalfWidth - powerUpRadius - safeMargin;
+                // align vertically roughly to obstacle top area (tweak if needed)
+                powerUpPos.y = obstacleTopY - (powerUpRadius * 0.1f);
+            }
+            else if (posType == 1) { // On top of obstacle
+                powerUpPos.x = obstaclePos.x;
+                powerUpPos.y = obstacleTopY - powerUpRadius - safeMargin;
+            }
+            else { // After obstacle (right)
+                powerUpPos.x = obstaclePos.x + obstacleHalfWidth + powerUpRadius + safeMargin;
+                powerUpPos.y = obstacleTopY - (powerUpRadius * 0.1f);
             }
 
-            PowerUpType type = static_cast<PowerUpType>(rand() % 2);
-            m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x, powerUpPos.y));
+            // Basic validation: no NaNs/infs and within reasonable world bounds
+            if (!std::isfinite(powerUpPos.x) || !std::isfinite(powerUpPos.y)) {
+                std::cout << "Skipping PowerUp spawn: invalid coordinate (NaN/inf)." << std::endl;
+            } else {
+                // Optionally clamp so power-up never appears below ground.
+                // If ground Y (in meters) is needed, compute similarly to how obstacles were created:
+                float groundY_m = (SCREEN_HEIGHT - 40.0f) / PIXELS_PER_METER; // if used elsewhere similarly
+                // Ensure powerUp sits above ground surface
+                float minAllowedY = powerUpRadius + 0.01f;
+                float maxAllowedY = groundY_m - powerUpRadius - 0.01f;
+                if (powerUpPos.y > maxAllowedY) powerUpPos.y = maxAllowedY;
+                if (powerUpPos.y < minAllowedY) powerUpPos.y = minAllowedY;
+
+                // Final defensive check
+                if (!std::isfinite(powerUpPos.x) || !std::isfinite(powerUpPos.y)) {
+                    std::cout << "Skipping PowerUp spawn: invalid after clamping." << std::endl;
+                } else {
+                    PowerUpType type = static_cast<PowerUpType>(rand() % 2);
+                    std::cout << "Spawning PowerUp (meters): " << powerUpPos.x << ", " << powerUpPos.y << std::endl;
+                    m_powerUps.push_back(std::make_unique<PowerUp>(World_Id, type, powerUpPos.x, powerUpPos.y));
+                }
+            }
         }
 
-        // --- Timer for Next Obstacle (with crash fix) ---
+        //  Timer for Next Obstacle
         float baseMinDelay = 1.5f;
         float baseMaxDelay = 3.0f;
         float difficultyReduction = (m_score / 10) * 0.1f;
