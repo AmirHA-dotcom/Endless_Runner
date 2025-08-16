@@ -197,7 +197,6 @@ void Player::Update(b2WorldId worldId, float deltaTime, int score)
     else // The player is in the air
     {
         b2Vec2 velocity = b2Body_GetLinearVelocity(Body_Id);
-        std::cout << "In Air, Y-Velocity: " << velocity.y << std::endl;
 
         if (velocity.y < -0.1f) // Moving upwards (jumping)
         {
@@ -567,6 +566,76 @@ void PowerUp::Render(SDL_Renderer* renderer, float cameraX)
 }
 
 void PowerUp::Update(b2WorldId worldId, float deltaTime, int score)
+{
+    // This animation timer logic is the same as the Player's
+    m_animTimer += deltaTime;
+    if (m_animTimer >= m_animSpeed)
+    {
+        m_currentFrame = (m_currentFrame + 1) % m_frameCount;
+        m_animTimer -= m_animSpeed;
+    }
+}
+
+// Coins
+
+Coin::Coin(b2WorldId worldId, float x, float y)
+{
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.type = b2_staticBody;
+    bodyDef.position = { x, y };
+    bodyDef.userData = this;
+
+    //std::cout << "Creating PowerUp at: " << bodyDef.position.x << ", " << bodyDef.position.y << std::endl;
+
+    Body_Id = b2CreateBody(worldId, &bodyDef);
+
+    // All power-ups will be sensors
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    shapeDef.isSensor = true;
+
+    // ... set filter data if needed ...
+
+    b2Circle circle;
+    circle.radius = 20.0f / PIXELS_PER_METER; // All power-ups are 20px radius circles
+    b2CreateCircleShape(Body_Id, &shapeDef, &circle);
+
+    m_texture = Asset_Manager::GetInstance().GetTexture("Coin");
+
+    m_frameCount = 10; // Both sprite sheets have 10 main animation frames
+    m_animSpeed = 0.1f; // Adjust for desired rotation speed
+    m_currentFrame = 0;
+    m_animTimer = 0.0f;
+
+    if (m_texture)
+    {
+        int textureWidth, textureHeight;
+        SDL_QueryTexture(m_texture, NULL, NULL, &textureWidth, &textureHeight);
+        m_frameWidth = textureWidth / 10;
+        m_frameHeight = textureHeight;
+    }
+}
+
+void Coin::Render(SDL_Renderer* renderer, float cameraX)
+{
+    if (m_texture == nullptr) return;
+
+    // Source rect on the sprite sheet
+    SDL_Rect srcRect = { m_currentFrame * m_frameWidth, 0, m_frameWidth, m_frameHeight };
+
+    // Destination rect on the screen
+    b2Vec2 position = b2Body_GetPosition(Body_Id);
+    int radius = 20; // Visual radius in pixels
+    SDL_Rect destRect = {
+            static_cast<int>((position.x * PIXELS_PER_METER) - radius - cameraX),
+            static_cast<int>((position.y * PIXELS_PER_METER) - radius),
+            radius * 2,
+            radius * 2
+    };
+
+    SDL_RenderCopy(renderer, m_texture, &srcRect, &destRect);
+}
+
+void Coin::Update(b2WorldId worldId, float deltaTime, int score)
 {
     // This animation timer logic is the same as the Player's
     m_animTimer += deltaTime;

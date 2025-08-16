@@ -28,6 +28,7 @@ private:
     deque<unique_ptr<Scenery>> m_Ground_Segments;
     deque<unique_ptr<Obstacle>> m_Obstacles;
     deque<unique_ptr<PowerUp>> m_powerUps;
+    deque<unique_ptr<Coin>> m_coins;
 
     float m_Obstacle_Spawn_Timer = 0.0f;
 
@@ -41,6 +42,8 @@ private:
     vector<string> wide_obstacle_skins;
 
     std::vector<std::vector<SDL_Point>> m_starLayers;
+
+    int Coin_Count = 0;
 public:
     Game();
     void Run();

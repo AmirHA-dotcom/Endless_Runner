@@ -35,6 +35,8 @@ public:
     virtual void Render(SDL_Renderer* renderer, float cameraX) = 0;
 };
 
+// Player
+
 class Player : public Object
 {
 private:
@@ -90,6 +92,8 @@ public:
     float GetHeightMeters() const { return 50.0f / PIXELS_PER_METER; }
 };
 
+// Scenery
+
 class Scenery : public Object
 {
 private:
@@ -102,6 +106,8 @@ public:
     void Render(SDL_Renderer* renderer, float cameraX) override;
     float Get_Right_EdgeX() const;
 };
+
+// Obstacles
 
 class Obstacle : public Object
 {
@@ -148,6 +154,25 @@ public:
     b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
 
     PowerUpType GetType() const { return m_type; }
+};
+
+// Coins
+
+class Coin : public Object
+{
+private:
+    int m_frameCount;
+    int m_currentFrame;
+    int m_frameWidth;
+    int m_frameHeight;
+    float m_animTimer;
+    float m_animSpeed;
+public:
+    explicit Coin(b2WorldId worldId, float x, float y);
+    void Render(SDL_Renderer* renderer, float cameraX) override;
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
+
+    b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
 };
 
 #endif //ENDLESS_RUNNER_OBJECT_H

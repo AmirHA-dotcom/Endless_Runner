@@ -203,6 +203,14 @@ void Game::Update_Ground()
     {
         m_Obstacles.pop_front();
     }
+//    if (!m_powerUps.empty() && m_powerUps.front()->get_position().x < cameraX)
+//    {
+//        m_powerUps.pop_front();
+//    }
+//    if (!m_coins.empty() && m_coins.front()->get_position().x < cameraX)
+//    {
+//        m_coins.pop_front();
+//    }
 }
 
 void Game::Update_Spawning(float deltaTime)
@@ -322,6 +330,36 @@ void Game::Update_Spawning(float deltaTime)
             }
         }
 
+        // Coins
+        if (rand() % 3 == 0)
+        {
+            // The starting X position for the trail of coins
+            // A comfortable height for the player to jump and get them
+            float startX_px = cameraX + SCREEN_WIDTH - 65;
+            float spawnY_px = SCREEN_HEIGHT - 220.0f;
+            int coinCount = 3;
+
+            if (m_score >= 15)
+                coinCount = 4;
+            if (m_score >= 30)
+                coinCount = 5;
+            if(m_score >= 45)
+                coinCount = 6;
+
+            float spacing_px = 60.0f;
+
+            for (int i = 0; i < coinCount; ++i)
+            {
+                // Calculate the position for this specific coin in the trail
+                float coinX_px = startX_px + (i * spacing_px);
+
+                float coinX_meters = coinX_px / PIXELS_PER_METER;
+                float spawnY_meters = spawnY_px / PIXELS_PER_METER;
+
+                m_coins.push_back(std::make_unique<Coin>(World_Id, coinX_meters, spawnY_meters));
+            }
+        }
+
         //  Timer for Next Obstacle
         float baseMinDelay = 1.5f;
         float baseMaxDelay = 3.0f;
@@ -380,6 +418,9 @@ void Game::Render_UI()
         render_text(renderer, font_regular, "Extra Jump: " + to_string(m_Player->get_extra_jump_timer()), 20, 20);
     if (m_Player->HasDoubleScore())
         render_text(renderer, font_regular, "Double Score: " + to_string(m_Player->get_double_score_timer()), 20, 20);
+
+    render_text(renderer, font_regular, "Coins: " + to_string(Coin_Count), SCREEN_WIDTH - 100, 20);
+
 }
 
 void Game::Reset_Game()
@@ -391,6 +432,8 @@ void Game::Reset_Game()
 
     m_Obstacles.clear();
     m_Ground_Segments.clear();
+    m_coins.clear();
+    m_powerUps.clear();
 
     Generate_Initial_Ground();
     cameraX = 0.0f;
@@ -420,6 +463,11 @@ void Game::Render_Playing()
         powerUp->Render(renderer, cameraX);
     }
 
+    for (const auto& Coin : m_coins)
+    {
+        Coin->Render(renderer, cameraX);
+    }
+
     m_Player->Render(renderer, cameraX);
 
     Render_UI();
@@ -438,6 +486,12 @@ void Game::Update_Playing(float timeStep)
     {
         powerUp->Update(World_Id, timeStep, m_score);
     }
+
+    for (const auto& Coin : m_coins)
+    {
+        Coin->Update(World_Id, timeStep, m_score);
+    }
+
 
     // Step the Physics World
     b2World_Step(World_Id, timeStep, 3);
@@ -474,7 +528,7 @@ void Game::Update_Playing(float timeStep)
         }
     }
 
-    // Player vs Power-up Collision Check
+    // Power-up Collision Check
     if (!m_Player->IsDead())
     {
         b2Vec2 playerCenter = m_Player->get_position();
@@ -494,6 +548,33 @@ void Game::Update_Playing(float timeStep)
                 // Collision! Activate the power-up and remove it.
                 m_Player->ActivatePowerUp(powerUp->GetType());
                 it = m_powerUps.erase(it); // Erase and get next valid iterator
+            }
+            else
+            {
+                ++it; // No collision, just move to the next item
+            }
+        }
+    }
+
+    // Coin Collecting
+    if (!m_Player->IsDead())
+    {
+        b2Vec2 playerCenter = m_Player->get_position();
+        float playerRadius = m_Player->Get_Radius_Meters();
+
+        // Use a safe iterator loop to handle removing collected power-ups
+        for (auto it = m_coins.begin(); it != m_coins.end(); /* no increment */)
+        {
+            Coin* coin = it->get();
+            b2Vec2 powerUpCenter = coin->get_position();
+            float coinUpRadius = 20.0f / PIXELS_PER_METER; // Assuming 20px radius
+
+            float distanceSq = b2DistanceSquared(playerCenter, powerUpCenter);
+
+            if (distanceSq < (playerRadius + coinUpRadius) * (playerRadius + coinUpRadius))
+            {
+                Coin_Count++;
+                it = m_coins.erase(it); // Erase and get next valid iterator
             }
             else
             {
@@ -719,7 +800,7 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("powerUp", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet _powerUp.png", renderer);
 
     // Coins
-    Asset_Manager::GetInstance().LoadTexture("Coin", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("Coin", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet_Coin.png", renderer);
 
     // Ground
     Asset_Manager::GetInstance().LoadTexture("Ground_Sand", "D://Textures//kenney_platformer-art-deluxe//Base pack//Tiles//sandCenter.png", renderer);
