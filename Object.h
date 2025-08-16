@@ -83,7 +83,7 @@ class Scenery : public Object
 private:
     float m_Width_Meters;
 public:
-    explicit Scenery(b2WorldId WID, float startX);
+    explicit Scenery(b2WorldId WID, float startX, SDL_Texture* texture);
     ~Scenery();
 
     void Update(b2WorldId worldId, float deltaTime, int score) override;

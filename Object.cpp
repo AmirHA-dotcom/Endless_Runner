@@ -217,8 +217,10 @@ void Player::ActivatePowerUp(PowerUpType type)
 
 // Scenery
 
-Scenery::Scenery(b2WorldId worldId, float startX)
+Scenery::Scenery(b2WorldId worldId, float startX, SDL_Texture* texture)
 {
+    m_texture = texture;
+
     const float Ground_Height_Px = 20.0f;
     m_Width_Meters = SCREEN_WIDTH / PIXELS_PER_METER;
 
@@ -256,19 +258,33 @@ void Scenery::Update(b2WorldId worldId, float deltaTime, int score)
 
 void Scenery::Render(SDL_Renderer* renderer, float cameraX)
 {
-    const float GROUND_WIDTH_PX = SCREEN_WIDTH;
-    const float GROUND_HEIGHT_PX = 20.0f;
+    if (m_texture == nullptr) return;
 
-    b2Vec2 scenery_pos = b2Body_GetPosition(Body_Id);
-    SDL_Rect scenery_rect = {
-            (int)((scenery_pos.x * PIXELS_PER_METER) - (GROUND_WIDTH_PX / 2.0f) - cameraX),
-            (int)((scenery_pos.y * PIXELS_PER_METER) - (GROUND_HEIGHT_PX / 2.0f)),
-            (int)GROUND_WIDTH_PX,
-            (int)GROUND_HEIGHT_PX
-    };
+    // Get the dimensions of a single tile from the texture
+    int tileWidth, tileHeight;
+    SDL_QueryTexture(m_texture, NULL, NULL, &tileWidth, &tileHeight);
 
-    SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &scenery_rect);
+    // Get the position and width of the entire ground segment in pixels
+    b2Vec2 segmentPos = b2Body_GetPosition(Body_Id);
+    float segmentWidthPx = m_Width_Meters * PIXELS_PER_METER;
+    float segmentTopLeftX = (segmentPos.x * PIXELS_PER_METER) - (segmentWidthPx / 2.0f);
+    float segmentTopLeftY = (segmentPos.y * PIXELS_PER_METER) - (tileHeight / 2.0f); // Assuming render height = tile height
+
+    // Calculate how many tiles are needed to cover the segment's width
+    int numTiles = static_cast<int>(ceil(segmentWidthPx / tileWidth));
+
+    // Loop and draw the tile repeatedly
+    for (int i = 0; i < numTiles; ++i)
+    {
+        SDL_Rect destRect = {
+                static_cast<int>(segmentTopLeftX + (i * tileWidth) - cameraX),
+                static_cast<int>(segmentTopLeftY),
+                tileWidth,
+                tileHeight
+        };
+
+        SDL_RenderCopy(renderer, m_texture, NULL, &destRect);
+    }
 }
 
 Scenery::~Scenery()

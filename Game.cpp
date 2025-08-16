@@ -172,9 +172,11 @@ void Game::Generate_Initial_Ground()
 {
     float currentX = 0.0f;
     // Create enough segments to fill about two screens worth of ground
+    SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("Ground_Sand");
+
     for (int i = 0; i < 3; ++i)
     {
-        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, currentX));
+        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, currentX, tex));
         // The next segment will start at the right edge of this one
         currentX = m_Ground_Segments.back()->Get_Right_EdgeX();
     }
@@ -186,8 +188,9 @@ void Game::Update_Ground()
     Scenery* lastSegment = m_Ground_Segments.back().get();
     if (lastSegment->Get_Right_EdgeX() < cameraX + SCREEN_WIDTH + 200) // +200 for a buffer
     {
+        SDL_Texture* tex = Asset_Manager::GetInstance().GetTexture("Ground_Sand");
         float nextX = lastSegment->Get_Right_EdgeX();
-        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX));
+        m_Ground_Segments.push_back(make_unique<Scenery>(World_Id, nextX, tex));
     }
 
     // If the right edge of the first ground segment is off the left side of the screen, remove it.
@@ -367,8 +370,6 @@ void Game::Render_Playing()
 
     RenderStarfield();
 
-    m_Player->Render(renderer, cameraX);
-
     for (const auto& segment : m_Ground_Segments)
     {
         segment->Render(renderer, cameraX);
@@ -383,6 +384,8 @@ void Game::Render_Playing()
     {
         powerUp->Render(renderer, cameraX);
     }
+
+    m_Player->Render(renderer, cameraX);
 
     Render_UI();
 }
@@ -675,10 +678,11 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("powerUp_extraJump", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Power Ups//frame-1.png", renderer);
     Asset_Manager::GetInstance().LoadTexture("powerUp_doubleScore", "D://Textures//Game asset - Shining items sprite sheets v2//Transparent PNG//Coin//frame-1.png", renderer);
 
+    // Ground
+    Asset_Manager::GetInstance().LoadTexture("Ground_Sand", "D://Textures//kenney_platformer-art-deluxe//Base pack//Tiles//sandCenter.png", renderer);
+
 
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
-
 }
 
 // BackGround
