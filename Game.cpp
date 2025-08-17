@@ -82,6 +82,7 @@ Game::Game()
 
     Load_Scores();
     LoadWallet();
+    InitializeSkins();
 
     // box2d initializations
     b2WorldDef worldDef = b2DefaultWorldDef();
@@ -908,9 +909,10 @@ void Game::Load_Assets()
 {
     // Player
     Asset_Manager::GetInstance().LoadTexture("player_default", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienGreen.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("player_skin1", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p2_spritesheet.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("player_skin2", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p3_spritesheet.png", renderer);
-
+    Asset_Manager::GetInstance().LoadTexture("player_skin1", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienBeige.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_skin2", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienBlue.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_skin3", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienPink.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_skin4", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienYellow.png", renderer);
 
     // Small Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster_Angry", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
@@ -1007,15 +1009,103 @@ void Game::RenderStarfield()
 
 void Game::HandleEvents_Shop(const SDL_Event& event)
 {
-    // We will add logic here later (e.g., for a "back" button)
+    if (event.type == SDL_KEYDOWN)
+    {
+        if (event.key.keysym.sym == SDLK_RIGHT)
+        {
+            // Move to the next skin, wrapping around
+            m_currentSkinIndex = (m_currentSkinIndex + 1) % m_allSkins.size();
+        }
+        else if (event.key.keysym.sym == SDLK_LEFT)
+        {
+            // Move to the previous skin, wrapping around
+            m_currentSkinIndex--;
+            if (m_currentSkinIndex < 0) {
+                m_currentSkinIndex = m_allSkins.size() - 1;
+            }
+        }
+    }
+    // Add logic for a "Back" button click that returns to the Main Menu
+}
+
+void Game::UpdateShop()
+{
+    // This function will handle clicks on the "Buy" / "Equip" button
+    // (We will add the logic here after rendering the button)
 }
 
 void Game::Render_Shop()
 {
-    // Clear the screen to a new color for the shop
-    SDL_SetRenderDrawColor(renderer, 50, 50, 80, 255); // A dark purple
+    SDL_SetRenderDrawColor(renderer, 30, 30, 50, 255); // Dark blue background
     SDL_RenderClear(renderer);
 
-    // Draw a placeholder title
-    render_text(renderer, font_large, "SHOP", SCREEN_WIDTH / 2 - 70, 100);
+    // --- Calculate Indices for Wrapping ---
+    int prevIndex = (m_currentSkinIndex - 1 + m_allSkins.size()) % m_allSkins.size();
+    int nextIndex = (m_currentSkinIndex + 1) % m_allSkins.size();
+
+    Skin& currentSkin = m_allSkins[m_currentSkinIndex];
+    Skin& prevSkin = m_allSkins[prevIndex];
+    Skin& nextSkin = m_allSkins[nextIndex];
+
+    // --- Get Textures from AssetManager ---
+    SDL_Texture* currentTex = Asset_Manager::GetInstance().GetTexture(currentSkin.id);
+    SDL_Texture* prevTex = Asset_Manager::GetInstance().GetTexture(prevSkin.id);
+    SDL_Texture* nextTex = Asset_Manager::GetInstance().GetTexture(nextSkin.id);
+
+    // --- Draw the Skins ---
+    // Draw current skin large and in the center
+    SDL_Rect currentRect = { SCREEN_WIDTH / 2 - 75, 200, 150, 150 };
+    if (currentTex) SDL_RenderCopy(renderer, currentTex, NULL, &currentRect);
+
+    // Draw previous and next skins smaller and to the sides
+    SDL_Rect prevRect = { SCREEN_WIDTH / 2 - 200, 250, 100, 100 };
+    if (prevTex) SDL_RenderCopy(renderer, prevTex, NULL, &prevRect);
+
+    SDL_Rect nextRect = { SCREEN_WIDTH / 2 + 100, 250, 100, 100 };
+    if (nextTex) SDL_RenderCopy(renderer, nextTex, NULL, &nextRect);
+
+    // --- Draw Skin Name and Price ---
+    render_text(renderer, font_large, currentSkin.displayName, SCREEN_WIDTH/2 - 100, 400);
+    if (!currentSkin.isUnlocked) {
+        std::string priceText = std::to_string(currentSkin.price) + " Coins";
+        render_text(renderer, font_regular, priceText, SCREEN_WIDTH/2 - 50, 450);
+    }
+
+    // --- Draw the Dynamic Button ---
+    SDL_Rect buttonRect = { SCREEN_WIDTH / 2 - 100, 500, 200, 50 };
+    std::string buttonText;
+    SDL_Color buttonColor;
+
+    if (currentSkin.id == m_equippedSkinId) {
+        buttonText = "Equipped";
+        buttonColor = {50, 50, 50, 255}; // Disabled color
+    } else if (currentSkin.isUnlocked) {
+        buttonText = "Equip";
+        buttonColor = {0, 150, 0, 255}; // Green
+    } else { // Not unlocked
+        buttonText = "Buy";
+        if (m_totalCoins >= currentSkin.price) {
+            buttonColor = {0, 0, 150, 255}; // Blue
+        } else {
+            buttonColor = {150, 0, 0, 255}; // Red (not enough coins)
+        }
+    }
+    SDL_SetRenderDrawColor(renderer, buttonColor.r, buttonColor.g, buttonColor.b, buttonColor.a);
+    SDL_RenderFillRect(renderer, &buttonRect);
+    render_text(renderer, font_regular, buttonText, SCREEN_WIDTH/2 - 40, 510);
+
+    // Draw player's total coin balance
+    std::string walletText = "Your Coins: " + std::to_string(m_totalCoins);
+    render_text(renderer, font_regular, walletText, 20, 20);
+
+    SDL_RenderPresent(renderer);
+}
+
+void Game::InitializeSkins()
+{
+    // Define all the skins available in your game
+    m_allSkins.push_back({"player_default", "Default Alien", 0, true}); // The first skin is free and unlocked
+    m_allSkins.push_back({"player_green", "Green Alien", 100, false});
+    m_allSkins.push_back({"player_pink", "Pink Alien", 150, false});
+    // Add more skins here
 }

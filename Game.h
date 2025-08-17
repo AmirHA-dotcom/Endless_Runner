@@ -7,6 +7,13 @@
 
 #include "Object.h"
 
+struct Skin {
+    string id;            // The key used in the AssetManager (e.g., "player_default")
+    string displayName;
+    int price;
+    bool isUnlocked = false;
+};
+
 enum class STATE { MAIN_MENU, PLAYING, GAME_OVER, SHOP };
 
 class Game
@@ -54,6 +61,10 @@ private:
     int m_uiCoinFrameHeight = 0;
     float m_uiCoinAnimTimer = 0.0f;
     float m_uiCoinAnimSpeed = 0.1f;
+
+    std::vector<Skin> m_allSkins;
+    int m_currentSkinIndex = 0; // Which skin is currently selected in the shop
+    std::string m_equippedSkinId = "player_default";
 public:
     Game();
     void Run();
@@ -83,6 +94,8 @@ public:
     void LoadWallet();
     void HandleEvents_Shop(const SDL_Event& event);
     void Render_Shop();
+    void InitializeSkins();
+    void UpdateShop();
 };
 
 
