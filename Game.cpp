@@ -152,6 +152,9 @@ void Game::Run()
                 case STATE::GAME_OVER:
                     HandleEvents_GameOver(event);
                     break;
+                case STATE::SHOP:
+                    HandleEvents_Shop(event);
+                    break;
             }
         }
 
@@ -168,6 +171,9 @@ void Game::Run()
 
             case STATE::GAME_OVER:
                 Render_GameOver();
+                break;
+            case STATE::SHOP:
+                Render_Shop();
                 break;
         }
         SDL_RenderPresent(renderer);
@@ -707,17 +713,20 @@ void Game::Render_MainMenu()
     render_text(renderer, font_large, "Endless Runner", SCREEN_WIDTH / 2 - 150, 100);
 
     // --- Draw Buttons ---
-    SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 300, 200, 50 };
-    SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
+    SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
+    SDL_Rect shopButtonRect = { SCREEN_WIDTH / 2 - 95, 420, 200, 50 };
+    SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 480, 200, 50 };
 
     // Draw button backgrounds
     SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
     SDL_RenderDrawRect(renderer, &startButtonRect);
+    SDL_RenderDrawRect(renderer, &shopButtonRect);
     SDL_RenderDrawRect(renderer, &quitButtonRect);
 
     // Draw button text
-    render_text(renderer, font_regular, "Start", SCREEN_WIDTH / 2 - 25, 310);
-    render_text(renderer, font_regular, "Quit", SCREEN_WIDTH / 2 - 20, 370);
+    render_text(renderer, font_regular, "Start", SCREEN_WIDTH / 2 - 25, 370);
+    render_text(renderer, font_regular, "Shop", SCREEN_WIDTH / 2 - 25, 430);
+    render_text(renderer, font_regular, "Quit", SCREEN_WIDTH / 2 - 20, 490);
 
     // --- Draw High Scores Box ---
     render_text(renderer, font_regular, "High Scores", 100, 250);
@@ -764,8 +773,9 @@ void Game::HandleEvents_MainMenu(const SDL_Event& event)
         SDL_GetMouseState(&mouseX, &mouseY);
         SDL_Point mousePoint = { mouseX, mouseY };
 
-        SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 300, 200, 50 };
-        SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
+        SDL_Rect startButtonRect = { SCREEN_WIDTH / 2 - 95, 360, 200, 50 };
+        SDL_Rect shopButtonRect = { SCREEN_WIDTH / 2 - 95, 420, 200, 50 };
+        SDL_Rect quitButtonRect = { SCREEN_WIDTH / 2 - 95, 480, 200, 50 };
 
         if (SDL_PointInRect(&mousePoint, &startButtonRect))
         {
@@ -779,6 +789,12 @@ void Game::HandleEvents_MainMenu(const SDL_Event& event)
             running = false;
             Audio_Manager::GetInstance().CleanUp();
         }
+        else if (SDL_PointInRect(&mousePoint, &shopButtonRect))
+        {
+            Audio_Manager::GetInstance().PlaySound("UI_click");
+            m_current_State = STATE::SHOP;
+        }
+
     }
 }
 
@@ -891,8 +907,10 @@ void Game::LoadWallet()
 void Game::Load_Assets()
 {
     // Player
-//    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p1_stand.png", renderer);
-    Asset_Manager::GetInstance().LoadTexture("player", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienGreen.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_default", "D://Textures//kenney_platformer-art-deluxe//Extra animations and enemies//Spritesheets//alienGreen.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_skin1", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p2_spritesheet.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("player_skin2", "D://Textures//kenney_platformer-art-deluxe//Base pack//Player//p3_spritesheet.png", renderer);
+
 
     // Small Obstacles
     Asset_Manager::GetInstance().LoadTexture("obstacle_small_GreenMonster_Angry", "D://Textures//kenney_platformer-art-deluxe//Base pack//Enemies//blockerMad.png", renderer);
@@ -983,4 +1001,21 @@ void Game::RenderStarfield()
             SDL_RenderDrawPoint(renderer, screenX, screenY);
         }
     }
+}
+
+// Shop
+
+void Game::HandleEvents_Shop(const SDL_Event& event)
+{
+    // We will add logic here later (e.g., for a "back" button)
+}
+
+void Game::Render_Shop()
+{
+    // Clear the screen to a new color for the shop
+    SDL_SetRenderDrawColor(renderer, 50, 50, 80, 255); // A dark purple
+    SDL_RenderClear(renderer);
+
+    // Draw a placeholder title
+    render_text(renderer, font_large, "SHOP", SCREEN_WIDTH / 2 - 70, 100);
 }

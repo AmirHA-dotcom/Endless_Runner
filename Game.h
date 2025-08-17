@@ -7,7 +7,7 @@
 
 #include "Object.h"
 
-enum class STATE { MAIN_MENU, PLAYING, GAME_OVER };
+enum class STATE { MAIN_MENU, PLAYING, GAME_OVER, SHOP };
 
 class Game
 {
@@ -81,6 +81,8 @@ public:
     void RenderStarfield();
     void SaveWallet();
     void LoadWallet();
+    void HandleEvents_Shop(const SDL_Event& event);
+    void Render_Shop();
 };
 
 

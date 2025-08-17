@@ -53,7 +53,7 @@ Object::~Object()
 
 Player::Player(b2WorldId worldId)
 {
-    m_currentSkin = "player";
+    m_currentSkin = "player_default";
     m_texture = Asset_Manager::GetInstance().GetTexture(m_currentSkin);
     if (m_texture == nullptr) return;
 
