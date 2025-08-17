@@ -475,14 +475,18 @@ void Game::Render_UI()
 
 
     SDL_Texture* coinIcon = Asset_Manager::GetInstance().GetTexture("Coin");
-    if (coinIcon && m_current_State == STATE::PLAYING)
+    if (coinIcon)
     {
         SDL_Rect srcRect = { m_uiCoinCurrentFrame * m_uiCoinFrameWidth, 0, m_uiCoinFrameWidth, m_uiCoinFrameHeight };
 
         SDL_Rect destRect = { SCREEN_WIDTH - 150, 20, 32, 32 };
 
         SDL_RenderCopy(renderer, coinIcon, &srcRect, &destRect);
-        render_text(renderer, font_regular, "x " + to_string(current_coins), SCREEN_WIDTH - 110, 25);
+
+        if (m_current_State == STATE::PLAYING)
+            render_text(renderer, font_regular, "x " + to_string(current_coins), SCREEN_WIDTH - 110, 25);
+        else
+            render_text(renderer, font_regular, "x " + to_string(m_totalCoins), SCREEN_WIDTH - 110, 25);
     }
 
 }
@@ -718,14 +722,21 @@ void Game::Render_MainMenu()
     int yPos = 300;
     for (size_t i = 0; i < m_high_Scores.size() && i < 5; ++i)
     {
+        SDL_Texture* medalTexture = nullptr;
+        if (i == 0) medalTexture = Asset_Manager::GetInstance().GetTexture("medal_gold");
+        else if (i == 1) medalTexture = Asset_Manager::GetInstance().GetTexture("medal_silver");
+        else if (i == 2) medalTexture = Asset_Manager::GetInstance().GetTexture("medal_bronze");
+
+        if (medalTexture)
+        {
+            SDL_Rect medalRect = { 100, yPos, 32, 55 }; // Position just left of the text
+            SDL_RenderCopy(renderer, medalTexture, NULL, &medalRect);
+        }
+
         string scoreText = to_string(i + 1) + ". " + to_string(m_high_Scores[i]);
-        render_text(renderer, font_regular, scoreText, 100, yPos);
-        yPos += 40;
+        render_text(renderer, font_regular, scoreText, 140, yPos);
+        yPos += 60;
     }
-
-    // Draw Coins
-    render_text(renderer, font_regular, "Coins: " + to_string(m_totalCoins), SCREEN_WIDTH - 200, 250);
-
 }
 
 void Game::HandleEvents_Playing(const SDL_Event& event)
@@ -905,6 +916,11 @@ void Game::Load_Assets()
 
     // Ground
     Asset_Manager::GetInstance().LoadTexture("Ground_Sand", "D://Textures//kenney_platformer-art-deluxe//Base pack//Tiles//sandCenter.png", renderer);
+
+    // Medals
+    Asset_Manager::GetInstance().LoadTexture("medal_gold", "D://Textures//kenneymedals//PNG//flat_medal8.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("medal_silver", "D://Textures//kenneymedals//PNG//flatshadow_medal3.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("medal_bronze", "D://Textures//kenneymedals//PNG//flatshadow_medal2.png", renderer);
 
 
 //    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "D:\Textures\Game asset - Shining items sprite sheets v2\spritesheet_health.png", renderer);
