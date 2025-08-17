@@ -421,10 +421,13 @@ void Game::Update_Score()
 
 void Game::Render_UI()
 {
-    string scoreText = "Score: " + to_string(m_score);
-    SDL_Color textColor = { 200, 200, 200, 255 };
+    if (m_current_State == STATE::PLAYING)
+    {
+        string scoreText = "Score: " + to_string(m_score);
+        SDL_Color textColor = {200, 200, 200, 255};
 
-    render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
+        render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
+    }
 
     float barWidth = 200.0f;
     float barHeight = 40.0f;
