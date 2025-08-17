@@ -156,6 +156,26 @@ public:
     PowerUpType GetType() const { return m_type; }
 };
 
+// Health
+
+class Health : public Object
+{
+private:
+    int m_frameCount;
+    int m_currentFrame;
+    int m_frameWidth;
+    int m_frameHeight;
+    float m_animTimer;
+    float m_animSpeed;
+public:
+    explicit Health(b2WorldId worldId, PowerUpType type, float x, float y);
+    void Render(SDL_Renderer* renderer, float cameraX) override;
+    void Update(b2WorldId worldId, float deltaTime, int score) override;
+
+    b2Vec2  get_position() { return b2Body_GetPosition(Body_Id); }
+};
+
+
 // Coins
 
 class Coin : public Object

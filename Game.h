@@ -41,10 +41,12 @@ private:
     vector<string> tall_obstacle_skins;
     vector<string> wide_obstacle_skins;
 
-    std::vector<std::vector<SDL_Point>> m_starLayers;
+    vector<vector<SDL_Point>> m_starLayers;
 
     long int current_coins = 0;
     long int m_totalCoins = 0;
+
+    float m_tutorialTextTimer = 5.0f;
 public:
     Game();
     void Run();

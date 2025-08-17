@@ -417,10 +417,63 @@ void Game::Render_UI()
 
     render_text(renderer, font_large, scoreText, SCREEN_WIDTH / 2 - 75, 20, textColor);
 
-    if (m_Player->HasExtraJump())
-        render_text(renderer, font_regular, "Extra Jump: " + to_string(m_Player->get_extra_jump_timer()), 20, 20);
+    float barWidth = 200.0f;
+    float barHeight = 40.0f;
+    float barX = (150) - (barWidth / 2.0f);
+
     if (m_Player->HasDoubleScore())
-        render_text(renderer, font_regular, "Double Score: " + to_string(m_Player->get_double_score_timer()), 20, 20);
+    {
+        float timerFraction = m_Player->get_double_score_timer() / 10.0f; // Assuming 10 sec duration
+
+        // Draw the background bar
+        SDL_Rect bgRect = { (int)barX, 80, (int)barWidth, (int)barHeight };
+        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Dark grey
+        SDL_RenderFillRect(renderer, &bgRect);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, &bgRect);
+
+        // Draw the foreground bar
+        SDL_Rect fgRect = { (int)barX, 80, (int)(barWidth * timerFraction), (int)barHeight };
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Green
+        SDL_RenderFillRect(renderer, &fgRect);
+
+        render_text(renderer, font_regular, "Double Score", barX + 30, 85, { 175, 175, 175, 255});
+    }
+
+    if (m_Player->HasExtraJump())
+    {
+        float timerFraction = m_Player->get_extra_jump_timer() / 10.0f; // Assuming 10 sec duration
+
+        // Draw the background bar
+        SDL_Rect bgRect = { (int)barX, 130, (int)barWidth, (int)barHeight };
+        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Dark grey
+        SDL_RenderFillRect(renderer, &bgRect);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, &bgRect);
+
+        // Draw the foreground bar
+        SDL_Rect fgRect = { (int)barX, 130, (int)(barWidth * timerFraction), (int)barHeight };
+        SDL_SetRenderDrawColor(renderer, 0, 255, 100, 255); // Green
+        SDL_RenderFillRect(renderer, &fgRect);
+
+        render_text(renderer, font_regular, "Triple Jump", barX + 30, 135, { 175, 175, 175, 255});
+    }
+
+    if (m_tutorialTextTimer > 0.0f && m_current_State == STATE::PLAYING)
+    {
+        render_text(renderer, font_regular, "Press SPACE to Jump", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
+    }
+
+
+    SDL_Texture* coinIcon = Asset_Manager::GetInstance().GetTexture("Coin");
+
+    if (coinIcon)
+    {
+    SDL_Rect iconRect = { SCREEN_WIDTH - 150, 20, 32, 32 }; // Adjust position as needed
+
+    // 3. Draw the texture.
+    SDL_RenderCopy(renderer, coinIcon, NULL, &iconRect);
+    }
 
     render_text(renderer, font_regular, "Coins: " + to_string(current_coins), SCREEN_WIDTH - 100, 20);
 
@@ -444,6 +497,7 @@ void Game::Reset_Game()
     cameraX = 0.0f;
 
     m_Obstacle_Spawn_Timer = 3.0f;
+    m_tutorialTextTimer = 5.0f;
 }
 
 void Game::Render_Playing()
@@ -497,6 +551,7 @@ void Game::Update_Playing(float timeStep)
         Coin->Update(World_Id, timeStep, m_score);
     }
 
+    if (m_tutorialTextTimer > 0) m_tutorialTextTimer -= timeStep;
 
     // Step the Physics World
     b2World_Step(World_Id, timeStep, 3);
@@ -828,6 +883,7 @@ void Game::Load_Assets()
 
     // Power Ups
     Asset_Manager::GetInstance().LoadTexture("powerUp", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet _powerUp.png", renderer);
+    Asset_Manager::GetInstance().LoadTexture("health", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet_health.png", renderer);
 
     // Coins
     Asset_Manager::GetInstance().LoadTexture("Coin", "D://Textures//Game asset - Shining items sprite sheets v2//spritesheet_Coin.png", renderer);
@@ -836,7 +892,7 @@ void Game::Load_Assets()
     Asset_Manager::GetInstance().LoadTexture("Ground_Sand", "D://Textures//kenney_platformer-art-deluxe//Base pack//Tiles//sandCenter.png", renderer);
 
 
-//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "assets/images/kenney_foliage-pack/rock.png", renderer);
+//    Asset_Manager::GetInstance().LoadTexture("obstacle_rock", "D:\Textures\Game asset - Shining items sprite sheets v2\spritesheet_health.png", renderer);
 }
 
 // BackGround
