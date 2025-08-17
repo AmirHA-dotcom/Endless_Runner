@@ -47,6 +47,13 @@ private:
     long int m_totalCoins = 0;
 
     float m_tutorialTextTimer = 5.0f;
+
+    int m_uiCoinFrameCount = 0;
+    int m_uiCoinCurrentFrame = 0;
+    int m_uiCoinFrameWidth = 0;
+    int m_uiCoinFrameHeight = 0;
+    float m_uiCoinAnimTimer = 0.0f;
+    float m_uiCoinAnimSpeed = 0.1f;
 public:
     Game();
     void Run();

@@ -94,6 +94,15 @@ Game::Game()
     // Textures
     Load_Assets();
 
+    SDL_Texture* coinTexture = Asset_Manager::GetInstance().GetTexture("Coin");
+    if (coinTexture)
+    {
+        m_uiCoinFrameCount = 10;
+        SDL_QueryTexture(coinTexture, NULL, NULL, &m_uiCoinFrameWidth, &m_uiCoinFrameHeight);
+        m_uiCoinFrameWidth /= m_uiCoinFrameCount;
+    }
+
+
     // BackGround
     GenerateStars();
 
@@ -466,16 +475,15 @@ void Game::Render_UI()
 
 
     SDL_Texture* coinIcon = Asset_Manager::GetInstance().GetTexture("Coin");
-
-    if (coinIcon)
+    if (coinIcon && m_current_State == STATE::PLAYING)
     {
-    SDL_Rect iconRect = { SCREEN_WIDTH - 150, 20, 32, 32 }; // Adjust position as needed
+        SDL_Rect srcRect = { m_uiCoinCurrentFrame * m_uiCoinFrameWidth, 0, m_uiCoinFrameWidth, m_uiCoinFrameHeight };
 
-    // 3. Draw the texture.
-    SDL_RenderCopy(renderer, coinIcon, NULL, &iconRect);
+        SDL_Rect destRect = { SCREEN_WIDTH - 150, 20, 32, 32 };
+
+        SDL_RenderCopy(renderer, coinIcon, &srcRect, &destRect);
+        render_text(renderer, font_regular, "x " + to_string(current_coins), SCREEN_WIDTH - 110, 25);
     }
-
-    render_text(renderer, font_regular, "Coins: " + to_string(current_coins), SCREEN_WIDTH - 100, 20);
 
 }
 
@@ -552,6 +560,13 @@ void Game::Update_Playing(float timeStep)
     }
 
     if (m_tutorialTextTimer > 0) m_tutorialTextTimer -= timeStep;
+
+    m_uiCoinAnimTimer += timeStep;
+    if (m_uiCoinAnimTimer >= m_uiCoinAnimSpeed)
+    {
+        m_uiCoinCurrentFrame = (m_uiCoinCurrentFrame + 1) % m_uiCoinFrameCount;
+        m_uiCoinAnimTimer -= m_uiCoinAnimSpeed;
+    }
 
     // Step the Physics World
     b2World_Step(World_Id, timeStep, 3);
